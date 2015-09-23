@@ -62,6 +62,7 @@
 <!ENTITY % nmtoken "CDATA">      <!-- Any combination of XML name chars. -->
 <!ENTITY % isoLangCode "%nmtoken;">         <!-- ISO 639 Language Code -->
 <!ENTITY % isoCountryCode "%nmtoken;">      <!-- ISO 3166 Country Code -->
+<!ENTITY % isoStateCode "%nmtoken;">      <!-- ISO 3166-2:2013 Country Subdivision (State) Code -->
 <!ENTITY % isoCurrencyCode "%nmtoken;">     <!-- ISO 4217 Currency Code -->
 <!ENTITY % xmlLangCode "%nmtoken;"> <!-- Language code as defined by XML
                                          recommendation: Language and
@@ -71,7 +72,7 @@
     For cXML license agreement information, please see
     http://www.cxml.org/home/license.asp
 
-    $Id: //ariba/cxml/schema/Modules/Base.mod#15 $
+    $Id: //ariba/cxml/release/schema/1.2.28.2+/Modules/Base.mod#6 $
 -->
 
 <!--
@@ -103,7 +104,7 @@
 -->
 <!ELEMENT Extrinsic ANY>
 <!ATTLIST Extrinsic
-    nameRHT1  %string;  #REQUIRED
+    name  %string;  #REQUIRED
 >
 
 <!--
@@ -117,11 +118,14 @@
 
     xml:lang
         The language in which the description is written.
+    type
+        The qualifier of the description. 
 -->
 <!ELEMENT Description ( #PCDATA | ShortName )* > <!-- mixed: string and
                                                       ShortName -->
 <!ATTLIST Description
     xml:lang  %xmlLangCode;  #REQUIRED
+    type  %string;   #IMPLIED
 >
 
 <!--
@@ -182,7 +186,7 @@
 -->
 <!ELEMENT Phone (TelephoneNumber)>
 <!ATTLIST Phone
-    nameRHT2  %string;  #IMPLIED
+    name  %string;  #IMPLIED
 >
 
 <!--
@@ -190,7 +194,7 @@
 -->
 <!ELEMENT Fax (TelephoneNumber | URL | Email)>
 <!ATTLIST Fax
-    nameRHT3  %string;  #IMPLIED
+    name  %string;  #IMPLIED
 >
 
 <!-- Addressing Elements -->
@@ -199,7 +203,7 @@
 -->
 <!ELEMENT URL (#PCDATA)> <!-- URL -->
 <!ATTLIST URL
-    nameRHT4  %string;  #IMPLIED
+    name  %string;  #IMPLIED
 >
 
 <!--
@@ -212,7 +216,7 @@
 -->
 <!ELEMENT Email (#PCDATA)> <!-- string -->
 <!ATTLIST Email
-    nameRHT5          %string;       #IMPLIED
+    name          %string;       #IMPLIED
     preferredLang %xmlLangCode;  #IMPLIED
 >
 
@@ -221,6 +225,12 @@
     element is that it represents a communication "end point" for a
     location.
 
+
+   IdReference
+       ID reference is Within the application context (for example,
+a certain pair of buyer and supplier), 
+       the (identifier, domain) pair
+ should be unique.
     role
         Position this person or group plays in the procurement process.
         Likely values include endUser, administrator, purchasingAgent,
@@ -233,12 +243,17 @@
 
     addressID
         An id for the address. Needed to support address codes for
-        relationships that require id references.
+        relationships that require id references. Example: plantID
+     
+     addressIDDomain
+	It is the qualifier for the addressId to specify the agency or organization. Examples are DUNS, ILN and buyerLocationID.
+
 -->
-<!ELEMENT Contact (Name, PostalAddress*, Email*, Phone*, Fax*, URL*)>
+<!ELEMENT Contact (Name, PostalAddress*, Email*, Phone*, Fax*, URL*, IdReference*, Extrinsic*)>
 <!ATTLIST Contact
     role             NMTOKEN           #IMPLIED
     addressID        %string;          #IMPLIED
+    addressIDDomain   %string;   #IMPLIED
 >
 
 <!--
@@ -255,13 +270,28 @@
 
 <!--
     City is the name of the city in an Address' location.
+
+    cityCode
+        Optional code assigned by local/government agencies identifying a city region 
 -->
 <!ELEMENT City (#PCDATA)> <!-- string -->
+<!ATTLIST City
+    cityCode  %string;  #IMPLIED
+>
 
 <!--
-    State is an optional state identifier in an Address' location.
+    State is an optional state identifier in an Address' location. 
+
+    isoStateCode
+        The ISO 3166-2:2013 country subdivision (state) code for this country. 
+        Universally applicable code for the representation of the names of 
+        principal administrative divisions of countries and territories included 
+        in ISO 3166-1. It is intended to be used in conjunction with ISO 3166-1.
 -->
 <!ELEMENT State (#PCDATA)> <!-- string -->
+<!ATTLIST State
+    isoStateCode  %isoStateCode;  #IMPLIED
+>
 
 <!--
     PostalCode (I have no idea how to describe it)
@@ -283,12 +313,24 @@
 >
 
 <!--
+    Municipality specifies the name of the municipality in an Address’ location. 
+
+    municipalityCode
+        Optional code assigned by local/government agencies identifying a municipality region 
+-->
+<!ELEMENT Municipality (#PCDATA)> <!-- string -->
+<!ATTLIST Municipality
+    municipalityCode  %string;  #IMPLIED
+>
+
+
+<!--
     PostalAddress is a real-world location for a business or person.
 -->
-<!ELEMENT PostalAddress (DeliverTo*, Street+, City, State?,
-                         PostalCode?, Country)>
+<!ELEMENT PostalAddress (DeliverTo*, Street+, City, Municipality?, State?,
+                         PostalCode?, Country, Extrinsic*)>
 <!ATTLIST PostalAddress
-    nameRHT6  %string;  #IMPLIED
+    name  %string;  #IMPLIED
 >
 
 <!--
@@ -302,12 +344,37 @@
         An id for the address.  Needed to support address codes for
         relationships that require id references.  An example would be a
         shipping code.
+     
+     addressIDDomain
+	It is the qualifier for the addressId to specify the agency or organization. Examples are DUNS and ILN. 
 -->
 <!ELEMENT Address (Name, PostalAddress?, Email?, Phone?, Fax?, URL?)>
 <!ATTLIST Address
     isoCountryCode  %isoCountryCode;  #IMPLIED
     addressID       %string;          #IMPLIED
+    addressIDDomain   %string;   #IMPLIED
 >
+
+<!--
+    Defines the parties involved in a document (e.g. service entry sheet),
+    including fieldContractor, fieldEngineer and requester.
+
+    Contact
+        Contact information for the document (e.g. service entry sheet) partners.
+        Allowed contact roles include fieldContractor, fieldEngineer and requester.
+
+    IdReference
+        Partner reference ID, including party ID, supplier tax ID, etc.
+-->
+<!ELEMENT PartnerContact (Contact, IdReference*)>
+
+<!--
+    Defines the information of the issuer who is associated to the customs info document. 
+
+    Address
+        Defines the real world location of the issuer  
+-->
+<!ELEMENT Issuer ( Address )> 
 
 <!-- Financial Elements -->
 <!--
@@ -494,7 +561,7 @@
 -->
 <!ELEMENT ReturnData (ReturnValue, Name)>
 <!ATTLIST ReturnData
-    nameRTH7  %string;  #IMPLIED
+    name  %string;  #IMPLIED
 >
 
 <!ELEMENT ReturnValue (#PCDATA)>
@@ -633,6 +700,123 @@
 
 <!ELEMENT PriceTolerance (Percentage | Money)>
 
+<!ELEMENT TaxAmount (Money)>
+
+<!ELEMENT TaxableAmount (Money)>
+
+<!--
+    One language-specific string for the location of tax,
+    e.g. London, Canada, California, etc.
+
+    xml:lang
+        The language or locale in which the location of tax is written.
+-->
+<!ELEMENT TaxLocation (#PCDATA)>              <!-- string -->
+<!ATTLIST TaxLocation
+   xml:lang              %xmlLangCode;         #REQUIRED
+>
+
+<!--
+
+    TriangularTransactionLawReference indicates the relevant law as
+    titled for the local jurisdiction in the scenario of a triangular
+    transaction.  ex: Triangulation, article 28c,E paragraph 3 of the
+    6th EU VAT Directive
+
+    xml:lang
+        the language in which the law reference is written.
+-->
+<!ELEMENT TriangularTransactionLawReference (#PCDATA)>
+<!ATTLIST TriangularTransactionLawReference
+    xml:lang   %xmlLangCode;    #REQUIRED
+>
+
+<!--
+    Defines details of one type of tax.
+
+    TaxableAmount
+       The taxable amount.
+
+    TaxAmount
+       The tax amount.
+
+    TaxLocation
+       The tax location.
+
+    Description
+       The textual description of the current type of tax.
+
+    TriangularTransactionLawReference
+       The law reference for transactions where isTriangularTransaction is True
+
+    purpose
+       The purpose of the tax, e.g., tax (tax), custom duty, shippingTax, 
+       specialHandlingTax, etc.
+
+    category
+       The tax category, Sales tax (sales), Use tax (usage), VAT (vat),
+       GST (gst) are defined categories. Other values are permitted.
+
+    percentageRate
+       The tax rate in number of percentage.
+
+    isVatRecoverable
+       True if the VAT is recoverable.  Default is false.
+
+    taxPointDate
+       refers to the date on which VAT becomes due.
+
+    paymentDate
+       indicate the date when payment must be made.
+
+    isTriangularTransaction
+       True if the transaction is triangular.  Default is false.
+
+    exemptDetail
+       If the TaxAmount is zero, VAT or other regulations may require
+       a reason why.  zeroRated means the tax rate is zero.  exempt
+       means the item or items are exempt from taxation.
+
+-->
+<!ELEMENT TaxDetail (TaxableAmount?, TaxAmount, TaxLocation?, Description?,
+                     TriangularTransactionLawReference?, TaxRegime?, Extrinsic*)>
+<!ATTLIST TaxDetail
+    taxedElement            IDREF          #IMPLIED
+	purpose                 %string;       #IMPLIED
+    category                %string;       #REQUIRED
+    percentageRate          %r8;           #IMPLIED
+    isVatRecoverable        (yes)          #IMPLIED
+    taxPointDate            %datetime.tz;  #IMPLIED
+    paymentDate             %datetime.tz;  #IMPLIED
+    isTriangularTransaction (yes)          #IMPLIED
+    exemptDetail            (zeroRated | exempt)  #IMPLIED
+>
+
+<!--   TaxRegime is related to the type of supplier activities and the 
+	commodities in the invoice. Companies pay taxes based on the tax regime 
+	they are enrolled.   Sample tax regimes: Assimilated Regime wages, Regime 
+	of Small Taxpayers (REPECO), Regimen of business and professional activities, 
+	etc. Multiple tax regimes can be associated with a single invoice.
+-->
+
+<!ELEMENT TaxRegime (#PCDATA)>
+
+
+<!--
+    Definition of a cXML Tax item. This represents what a Tax element should
+    be in the classic notion of a line on a PO or Invoice. It can also
+    represent a per-lineitem tax element depending on where it appears
+    (inside of a item ELEMENT or inside of a something like a supplierOrder
+    ELEMENT).
+
+    Represents a tax item in the shopping basket. There could be one of these
+    for the entire order, or one per lineitem.
+
+    The total amount of taxes for the line item or order should be reflected
+    in the Money element. The breakdown of taxes, for example, tax on shipping
+    or tax on goods should be represented in separate TaxDetail elements.
+-->
+<!ELEMENT Tax (Money, Description, TaxDetail*, Extrinsic*)>
 
 <!--
     Defines a Modifications element which provides the original unit
@@ -655,11 +839,23 @@
 >
 
 <!--
-    Defines a Modification element: AdditionalDeduction: used only when allownces are involved
+    Defines a Modification element and optionally provide a level: AdditionalDeduction: used only when allownces are involved
      AdditionalCost: used when additional charges are involved
-     OriginalPrice represents the price on which the discount or charges apply. 
+     OriginalPrice represents the price on which the discount or charges apply.
+     Tax represents the Tax on the Modification
+	 
+	 Optional attribute level represent level of modification(using in cascading modifications).
+	 Example:
+	 Charge 1 (Level 1): Original Price 10$ Charge: 1$
+	 Charge 2 (Level 1): Original Price 10$ Charge: 1$
+	 Charge 3 (Level 2): Original Price 8$ Charge: 1$
+	 Charge 4 (Level 3): Original Price 7$ Charge: 1$ ...
 -->
-<!ELEMENT Modification (OriginalPrice, (AdditionalDeduction | AdditionalCost), ModificationDetail?)>
+<!ELEMENT Modification (OriginalPrice?, (AdditionalDeduction | AdditionalCost), Tax?, ModificationDetail?)>
+
+<!ATTLIST Modification
+level            %uint;  #IMPLIED
+>
 
 <!-- 
 The type attribute can specify the type of deduction. 
@@ -671,14 +867,14 @@ Eg. discount -->
 
 <!ELEMENT ModificationDetail (Description?, Extrinsic*)>
 <!ATTLIST ModificationDetail
-    nameRHT8             %string;  #REQUIRED
+    name             %string;  #REQUIRED
     startDate        %datetime.tz;  #IMPLIED
     endDate          %datetime.tz;  #IMPLIED
  >
  
  <!ELEMENT Value EMPTY>
  <!ATTLIST Value
-	valueRHT1            %number;       #REQUIRED
+	value            %number;       #REQUIRED
  >
 
  <!ELEMENT Percentage EMPTY>
@@ -726,8 +922,44 @@ Eg. discount -->
 	percent          %r8;           #REQUIRED
 >
 
-
 <!--
+    The ProductMovementItemIDInfo element provides a clear reference to the line item
+    in a Consignment Movement.
+
+    movementLineNumber
+        The line number of current line item, copied from movement document.
+
+    movementID
+       The id of a consignment movement entry known to the buyer system.
+
+    movementDate
+        The date and time the product was moved from consignment inventory to the buyer inventory.
+-->
+<!ELEMENT ProductMovementItemIDInfo (IdReference*)>
+<!ATTLIST ProductMovementItemIDInfo
+    movementLineNumber        %uint;              #REQUIRED
+    movementID                %string;            #REQUIRED
+    movementDate              %datetime.tz;       #REQUIRED
+>
+
+
+<!-- The InvoiceItemIDInfo element provides a clear reference to the line item  in a InvoiceDetailRequest document.
+
+    invoiceLineNumber
+        The line number of a line item, copied from InvoiceDetailRequest. 
+
+    invoiceID
+        The id of an invoice known to the supplier system.
+
+    invoiceDate
+        The invoice date.
+-->
+<!ELEMENT InvoiceItemIDInfo (IdReference*)>
+<!ATTLIST InvoiceItemIDInfo
+    invoiceLineNumber        %uint;              #REQUIRED
+    invoiceID                %string;            #REQUIRED
+    invoiceDate              %datetime.tz;       #IMPLIED
+><!--
     For cXML license agreement information, please see
     http://www.cxml.org/home/license.asp
 
@@ -748,12 +980,110 @@ Eg. discount -->
     For easy parsing of this file, do not remove whitespace surrounding the
     actual version string.
 -->
-<!ENTITY cxml.version "1.2.024" >
+<!ENTITY cxml.version "1.2.028" >
 <!--
     For cXML license agreement information, please see
     http://www.cxml.org/home/license.asp
 
-    $Id: //ariba/cxml/schema/Modules/Supplier.mod#1 $
+	$Id: //ariba/cxml/schema/Modules/Industry.mod#1$
+-->
+
+<!-- ====
+    Allow this module to be built separately from any other DTD file.
+==== -->
+
+<!--
+    Characteristic contains detailed information about an item that can be used across different industries. 
+
+	Domain - Type of Characteristic
+		Examples: size, sizeCode, color, colorCode , quality, qualityCode, grade, gradeCode 
+	Value  - Value for the domain.
+	code - For information such as currency code and unit of measure
+-->
+<!ELEMENT Characteristic EMPTY>
+<!ATTLIST Characteristic
+	domain	%string;   #REQUIRED
+	value  	%string;   #REQUIRED
+	code 	%string;   #IMPLIED >
+	
+<!-- Usage of EANID is deprecated! Use IdReference and proper domain within ItemID instead.
+
+    Number assigned to a manufacturer's product according to the International Article Numbering Association or UPC(Universal Product Code) for an article.-->
+<!ELEMENT EANID (#PCDATA)> <!-- string -->
+
+<!-- European Waste Catalogue is a unique ID for articles listed in the EU Waste Catalogue (EWC). It requires special handling -->
+<!ELEMENT EuropeanWasteCatalogID (#PCDATA)>
+
+<!-- Number assigned by a supplier to a special promotion activity. Promotions affect the forward planning/ordering process (and the related pricing) -->
+<!ELEMENT PromotionDealID (#PCDATA)> <!-- string -->
+
+<!-- The item number is a promotional variant number. Used when only one or some variants of an article are promoted-->
+<!ELEMENT PromotionVariantID (#PCDATA)> <!-- string -->
+
+
+<!-- Total retail value of all products -->
+<!ELEMENT TotalRetailAmount (Money)>
+
+<!-- Information price, excluding allowances or charges, and taxes. The price stated is for information purposes only -->
+<!ELEMENT InformationalAmount (Money)>
+
+<!-- Gross monetary amount paid or to be paid at intervals -->
+<!ELEMENT GrossProgressPaymentAmount (Money)>
+
+<!-- Deposit amount charged for returnable items (boxes, containers, pallets…)-->
+<!ELEMENT TotalReturnableItemsDepositAmount (Money)>
+
+<!-- Total amount of goods and services excluding deposits for returnable goods -->
+<!ELEMENT GoodsAndServiceAmount (Money)>
+
+<!-- Specific exact amount -->
+<!ELEMENT ExactAmount (Money)>
+
+<!-- Groups all the additional amounts -->
+<!ELEMENT AdditionalAmounts (TotalRetailAmount?, InformationalAmount?, GrossProgressPaymentAmount?, 
+					TotalReturnableItemsDepositAmount?, GoodsAndServiceAmount?,  ExactAmount? )>
+
+<!--Price value per unit (gross price) -->
+<!ELEMENT UnitGrossPrice (Money, PriceBasisQuantity?)>
+
+<!--Information price, excluding allowances or charges, and taxes. The price stated is for information purposes only -->
+<!ELEMENT InformationalPrice (Money, PriceBasisQuantity?)>
+
+<!-- Information price, excluding  only taxes. The price stated is for information purposes only -->
+<!ELEMENT InformationalPriceExclTax (Money, PriceBasisQuantity?)>
+
+<!-- the Net value of a single unit that has to be corrected (new price). -->
+<!ELEMENT UnitNetPriceCorrection (Money, PriceBasisQuantity?)>
+
+
+<!-- Defines all the item related additional prices -->
+<!ELEMENT AdditionalPrices (UnitGrossPrice?, InformationalPrice?,  InformationalPriceExclTax?, UnitNetPriceCorrection?)>
+
+
+<!-- Defines product/item related indicators 
+	domain
+		Specifies the type of the Indicator. Suggested values are:       
+		InvoiceUnitIndicator - Indicator specifies the unit as basis for invoicing ("price per unit")
+		ConsumerUnitIndicator - Indicator will be set if the specified unit is used from the consumer/consumption process (for instance "gallons" or "liters")
+		ReturnableContainerIndicator - Indicator will be set if the packaging/container shall be returned to the sender and will be re-used.
+		TradeUnitIndicator - Indicator will be set if the specified unit is used to describe the trading unit (for instance "barrel" for oil)
+		DutyIndicator - specifies that the current line item has a special fee
+		CommisionIndicator - Marks the actual position/line item has a provision
+	value
+		Value of the Indicator
+-->
+<!ELEMENT ItemIndicator EMPTY>
+<!ATTLIST ItemIndicator
+    domain  %string;   #REQUIRED
+    value  %string;    #REQUIRED
+>
+
+
+<!--
+    For cXML license agreement information, please see
+    http://www.cxml.org/home/license.asp
+
+    $Id: //ariba/cxml/release/schema/1.2.28.2+/Modules/Supplier.mod#1 $
 -->
 
 <!--
@@ -816,7 +1146,7 @@ Eg. discount -->
 -->
 <!ELEMENT OtherOrderTarget ANY>
 <!ATTLIST OtherOrderTarget
-    nameRHT9  %string;  #IMPLIED
+    name  %string;  #IMPLIED
 >
 
 <!--
@@ -842,7 +1172,7 @@ Eg. discount -->
     For cXML license agreement information, please see
     http://www.cxml.org/home/license.asp
 
-    $Id: //ariba/cxml/modules/Item.mod#6 $
+    $Id: //ariba/cxml/modules/Item.mod#19 $
 -->
 
 <!--
@@ -850,6 +1180,15 @@ Eg. discount -->
 -->
 <!ENTITY % lineItemType '(composite | item)'>
 
+<!--
+    Type of a coposite line item. 
+-->
+<!ENTITY % compositeItemType '(groupLevel | itemLevel)'>
+
+<!--
+    Type of a service line item.
+-->
+<!ENTITY % serviceItemType '(material | service)'>
 
 <!--
     ID with which the item's manufacturer identifies the item.
@@ -885,6 +1224,15 @@ Eg. discount -->
      receive the item.
 -->
 <!ELEMENT LeadTime (#PCDATA)>   <!-- uint -->
+
+<!--
+    SupplierBatch is the batch ID provided by the supplier at the line item quantity level
+    to identify  the batch in which the item or the product was produced. The batch id is helpful in tracebility.
+
+    Batch numbers (also call "lot number", "variant") are used in several industries to uniquely identify  items produced together.
+-->
+<!ELEMENT SupplierBatchID (#PCDATA)>
+
 
 <!--
     How the supplier identifies an item they sell.
@@ -928,11 +1276,28 @@ Eg. discount -->
        </SupplierPartAuxiliaryID>
        ...
 
+    revisionID     
+       Also known as Material Revision Level. "Revision" is the most widely-used
+       term for referring to that attribute which distinguishes one closely-
+       related design iteration from another. A revision represents a change to
+       an object, or a modification to a part such that the part remains
+       interchangeable with its previous iteration.
+       As part of engineering change management the supplier uses the revision
+       level to uniquely identify the version of a product, of an article or of
+       a part.
      
 -->
 <!ELEMENT SupplierPartID (#PCDATA)> <!-- string -->
-
+<!ATTLIST SupplierPartID
+	revisionID	%string;	#IMPLIED
+>
 <!ELEMENT SupplierPartAuxiliaryID ANY>
+
+<!--
+   BuyerPartID represents an item in buyer system. This identifier is specified by the buyer
+-->
+<!ELEMENT BuyerPartID (#PCDATA)>
+
 
 <!--
     A unique identification of an item. SupplierID is not required since
@@ -942,31 +1307,172 @@ Eg. discount -->
     use Empty SupplierPartID tag. These type of items do not have specific part numbers
     at the time of placing the Blanket Order. There will be subsequent release orders
     or invoices that will define the SupplierID.
+
+    IdReference
+    Defines an ID reference.  Within the application context (for example,
+    certain pair of buyer and supplier), the (identifier, domain) pair should be unique.
 -->
-<!ELEMENT ItemID (SupplierPartID, SupplierPartAuxiliaryID?)>
+<!ELEMENT ItemID (SupplierPartID, SupplierPartAuxiliaryID?, BuyerPartID?, IdReference*)>
 
 <!--
     ItemDetail contains detailed information about an item. All the data that
     a user would want to see about an item instead of the bare essentials
     that are represented in the ItemID.
-
+  
     LeadTime
         time in days to receive the item
+.
+    
+Dimension
+    
+	Item dimensions.
+    
+  
+ItemDetailIndustry
+    
+	Industry  specfic item detail information.
 -->
 <!ELEMENT ItemDetail (UnitPrice, Description+, UnitOfMeasure, PriceBasisQuantity?,
                       Classification+, ManufacturerPartID?,
-                      ManufacturerName?, URL?, LeadTime?, Extrinsic*)>
+                      ManufacturerName?, URL?, LeadTime?, Dimension*, ItemDetailIndustry?, Extrinsic*)>
 
 
 <!--
 	Item details specific for items that describe blanket purchase order items. 
 	This element should only be used for items in a purchase order of 
-	type "blanket"	
+	type "blanket"	or "regular".
 -->
 <!ELEMENT BlanketItemDetail (Description+, MaxAmount?, MinAmount?, 
                              MaxQuantity?, MinQuantity?,
 			     UnitPrice?, UnitOfMeasure?, PriceBasisQuantity?,
 			     Classification*, Extrinsic*)>
+
+<!--
+    ItemDetailIndustry contains detailed information about an item for a specific industry. 
+-->
+<!ELEMENT ItemDetailIndustry (ItemDetailRetail? )>
+
+<!--
+    ItemDetailIndustry contains detailed information about an item for a retail industry. 
+    
+    EANID
+        Deprecated, use '<IdReference domain="EAN-13">' within 'ItemID' instead.
+-->
+<!ELEMENT ItemDetailRetail (EANID?, EuropeanWasteCatalogID?, Characteristic* )>
+
+<!--
+    An identifier for a subcontracting component within the procurement process.
+-->
+<!ELEMENT ComponentID (#PCDATA)>
+
+<!--
+    An element contains product information of subcontracting component (such as buyer product id, supplier product id, standard product id, internal product idetc.).
+
+    SupplierPartID
+        It represents a product in supplier system. This identifier is specified by the supplier.
+
+    SupplierPartAuxiliaryID
+        If SupplierPartID does not provide a unique key to identify the item, then the supplier should generate a key which identifies the product uniquely when combined with the SupplierID and SupplierPartID. The key is called SupplierPartAuxiliaryID.
+
+    BuyerPartID
+        It represents a product in buyer system. This identifier is specified by the buyer.
+
+    IdReference
+        ID reference is within the application context (for example, standard id for a product), the (identifier, domain) pair should be unique.
+-->
+<!ELEMENT Product (SupplierPartID?, SupplierPartAuxiliaryID?, BuyerPartID?, IdReference*)>
+
+<!--
+    A sequential number that is assigned when changes are made to component.
+-->
+<!ELEMENT ProductRevisionID (#PCDATA)>
+
+<!--
+    An element carrying batch information for material or goods  produced in a single manufacturing run.
+
+    BuyerBatchID
+        An identifier from buyer to identify the material/goods produced in a single manufacturing run
+
+    SupplierBatchID
+        An identifier from supplier to identify the material/goods produced in a single manufacturing run
+
+    PropertyValuation
+        It consists of the property to be valuated and the associated values
+
+    productionDate
+        Date on which when a batch of material or goods is produced
+
+    expirationDate
+        Date on which when a batch of material/goods becomes expired
+
+    originCountryCode
+        Country of origin for a batch of material or goods
+-->
+<!ELEMENT Batch (BuyerBatchID?, SupplierBatchID?, PropertyValuation*)>
+<!ATTLIST Batch
+productionDate      %datetime.tz;    	#IMPLIED
+expirationDate   	%datetime.tz;      	#IMPLIED
+originCountryCode 	%isoCountryCode; 	#IMPLIED
+>
+
+<!--
+    An identifier from buyer to identify the material/goods produced in a single manufacturing run.
+-->
+<!ELEMENT BuyerBatchID (#PCDATA)>
+
+<!--
+    PropertyValuation consists of the property to be valuated and the associated values
+
+    PropertyReference:
+        The property being valuated
+
+    ValueGroup:
+        Contains a group of values pertaining to a property
+-->
+<!ELEMENT PropertyValuation (PropertyReference?, ValueGroup*)>
+
+<!--
+    PropertyReference is a reference to the property being valuated
+
+    IdReference
+        ID reference is within the application context (for example, id for a property), the (identifier, domain) pair should be unique.
+-->
+<!ELEMENT PropertyReference (IdReference*)>
+
+<!--
+    ValueGroup contains a group of values pertaining to a property.
+
+    IdReference
+        ID reference is within the application context (for example, id of value group), the (identifier, domain) pair should be unique.
+
+    ParentID
+        For Structured property, ParentID is an identifier of its parent
+
+    PropertyValue
+        Values for valuating property
+-->
+<!ELEMENT ValueGroup (IdReference?,  ParentID?, PropertyValue*)>
+
+<!--
+For Structured property, ParentID is an identifier of its parent
+-->
+<!ELEMENT ParentID (#PCDATA)>
+
+<!--
+    PropertyValue consists of values for valuating a property.
+        Example: 	QuantitySpecification: valuating properties whose data types are in units, for example, 5 pieces, 7 kg
+        IntegerSpecification: valuating non-dimensional, integer properties, for example, codes, indexes, and sequential numbers
+        DateTimeSpecification: valuating date time properties, for example requirement date, production date, and expiration date
+
+    PropertyCharacteristic
+        It has the detailed information about a value that can be used for valuation of property
+
+    Name
+        Name of PropertyValue
+-->
+<!ELEMENT PropertyValue (Characteristic*)>
+<!ATTLIST PropertyValue
+name          %string;       #IMPLIED>
 <!--
     For cXML license agreement information, please see
     http://www.cxml.org/home/license.asp
@@ -1738,7 +2244,7 @@ Eg. discount -->
     For cXML license agreement information, please see
     http://www.cxml.org/home/license.asp
 
-    $Id: //ariba/cxml/schema/Modules/Transaction.mod#37 $
+    $Id: //ariba/cxml/release/schema/1.2.28.2+/Modules/Transaction.mod#9 $
 -->
 
 <!--
@@ -1782,13 +2288,24 @@ Eg. discount -->
 
 <!--
     The bill to for an item.
+
+   IdReference
+       ID reference is Within the application context (for example, a certain pair of buyer and supplier), the (identifier, domain) pair should be unique.
 -->
-<!ELEMENT BillTo (Address)>
+<!ELEMENT BillTo (Address, IdReference*)>
 
 <!--
     The ship to for a item.
+
+   IdReference
+       ID reference is Within the application context (for example, a certain pair of buyer and supplier), the (identifier, domain) pair should be unique.
+   
+   Address
+       To provide a plant location description, the domain attribute of the element IdReference should be set to "buyerLocationID", the identifier to the plantID.
+       The addressIDDomain should be set to "buyerLocationID" and the addressID to the plantID. Use the name for the description.
+
 -->
-<!ELEMENT ShipTo (Address, CarrierIdentifier?, TransportInformation*)>
+<!ELEMENT ShipTo (Address, CarrierIdentifier*, TransportInformation*, IdReference*)>
 
 <!--
     Definition of a cXML Shipping item. Represents a shipping cost in the
@@ -1826,8 +2343,10 @@ Eg. discount -->
     Discount
 	 	The percentage or amount of the discount term.  This element should be omitted
 	 	if the payment term is a net term.
+    Extrinsic
+	Additional information related to this payment term.
 -->
-<!ELEMENT PaymentTerm (Discount?)>
+<!ELEMENT PaymentTerm (Discount?, Extrinsic*)>
 <!ATTLIST PaymentTerm
     payInNumberOfDays        %uint;         #REQUIRED
 >
@@ -1881,7 +2400,7 @@ Eg. discount -->
 <!ENTITY % cxml.accounting  "( Segment+ | AccountingSegment+ )">
 <!ELEMENT Accounting (%cxml.accounting;)>
 <!ATTLIST Accounting
-    nameRHT10  %string;  #REQUIRED
+    name  %string;  #REQUIRED
 >
 
 <!--
@@ -1895,117 +2414,13 @@ Eg. discount -->
 -->
 <!ELEMENT Distribution (Accounting, Charge)>
 
-<!ELEMENT TaxAmount (Money)>
 
-<!ELEMENT TaxableAmount (Money)>
-
-<!--
-    One language-specific string for the location of tax,
-    e.g. London, Canada, California, etc.
-
-    xml:lang
-        The language or locale in which the location of tax is written.
--->
-<!ELEMENT TaxLocation (#PCDATA)>              <!-- string -->
-<!ATTLIST TaxLocation
-   xml:lang              %xmlLangCode;         #REQUIRED
->
-
-<!--
-
-    TriangularTransactionLawReference indicates the relevant law as
-    titled for the local jurisdiction in the scenario of a triangular
-    transaction.  ex: Triangulation, article 28c,E paragraph 3 of the
-    6th EU VAT Directive
-
-    xml:lang
-        the language in which the law reference is written.
--->
-<!ELEMENT TriangularTransactionLawReference (#PCDATA)>
-<!ATTLIST TriangularTransactionLawReference
-    xml:lang   %xmlLangCode;    #REQUIRED
->
-
-<!--
-    Defines details of one type of tax.
-
-    TaxableAmount
-       The taxable amount.
-
-    TaxAmount
-       The tax amount.
-
-    TaxLocation
-       The tax location.
-
-    Description
-       The textual description of the current type of tax.
-
-    TriangularTransactionLawReference
-       The law reference for transactions where isTriangularTransaction is True
-
-    purpose
-       The purpose of the tax, e.g., tax (tax), custom duty, shippingTax, 
-       specialHandlingTax, etc.
-
-    category
-       The tax category, Sales tax (sales), Use tax (usage), VAT (vat),
-       GST (gst) are defined categories. Other values are permitted.
-
-    percentageRate
-       The tax rate in number of percentage.
-
-    isVatRecoverable
-       True if the VAT is recoverable.  Default is false.
-
-    taxPointDate
-       refers to the date on which VAT becomes due.
-
-    paymentDate
-       indicate the date when payment must be made.
-
-    isTriangularTransaction
-       True if the transaction is triangular.  Default is false.
-
-    exemptDetail
-       If the TaxAmount is zero, VAT or other regulations may require
-       a reason why.  zeroRated means the tax rate is zero.  exempt
-       means the item or items are exempt from taxation.
-
--->
-<!ELEMENT TaxDetail (TaxableAmount?, TaxAmount, TaxLocation?, Description?,
-                     TriangularTransactionLawReference?, Extrinsic*)>
-<!ATTLIST TaxDetail
-    purpose                 %string;       #IMPLIED
-    category                %string;       #REQUIRED
-    percentageRate          %r8;           #IMPLIED
-    isVatRecoverable        (yes)          #IMPLIED
-    taxPointDate            %datetime.tz;  #IMPLIED
-    paymentDate             %datetime.tz;  #IMPLIED
-    isTriangularTransaction (yes)          #IMPLIED
-    exemptDetail            (zeroRated | exempt)  #IMPLIED
->
-
-<!--
-    Definition of a cXML Tax item. This represents what a Tax element should
-    be in the classic notion of a line on a PO or Invoice. It can also
-    represent a per-lineitem tax element depending on where it appears
-    (inside of a item ELEMENT or inside of a something like a supplierOrder
-    ELEMENT).
-
-    Represents a tax item in the shopping basket. There could be one of these
-    for the entire order, or one per lineitem.
-
-    The total amount of taxes for the line item or order should be reflected
-    in the Money element. The breakdown of taxes, for example, tax on shipping
-    or tax on goods should be represented in separate TaxDetail elements.
--->
-<!ELEMENT Tax (Money, Description, TaxDetail*, Extrinsic*)>
 
 <!-- Item Elements -->
 <!--
     The representation of a line item as it needs to be for sending to a
-    supplier.
+    supplier. The item can refer to a MasterAgreement in itself.
+
 
     quantity
         How many items are desired. Supplier and Commodity level items in an order of type
@@ -2029,10 +2444,35 @@ Eg. discount -->
 	    lineNumber of the parent line item in the order.
     itemType 
 	    specify whether the line item contains child line items or acts as a child item
+   requiresServiceEntry
+		This is a flag to indicate if a service entry request is required
+		for this item
+  confirmationDueDate
+    specifies the date by which the supplier has to respond with a Confirmation to the Purchase Order
 
+    ScheduleLine
+	Schedule Line(s) listed for the specific line item.
+    
+    ItemOutIndustry
+	Industry specific item information
+	
+    Packaging
+	Specify the packaging information for a line item. 
+	
+	compositeItemType
+	specify type of parent line item(lot/box)
+
+    Batch
+    Batch information of goods or material produced in a single manufacturing run. The information includes id, characteristic, date…ect.
+
+    itemCategory
+    It is for defining how a component or material is procured.  Item category, subcontract or consignment,� is supported.
+        subcontract refers to process of procuring a material by providing component information that makes the finished product
+        consignment refers to process of managing a material through a special process where the payment to supplier is withheld until the materail or service is consumed by the buyer.
 -->
 <!ELEMENT ItemOut (ItemID, Path?, (ItemDetail|BlanketItemDetail)?, (SupplierID | SupplierList)?, ShipTo?, Shipping?,
-                   Tax?, SpendDetail?, Distribution*, Contact*, TermsOfDelivery?, Comments?, Tolerances?)>
+                   Tax?, SpendDetail?, Distribution*, Contact*, TermsOfDelivery?, Comments?, Tolerances?, 
+				   ScheduleLine*,(MasterAgreementReference | MasterAgreementIDInfo)?,  ItemOutIndustry?, Packaging*, ReleaseInfo?,  Batch?)>
 <!ATTLIST ItemOut
     quantity               %r8;           #REQUIRED
     lineNumber             %uint;         #IMPLIED
@@ -2042,7 +2482,44 @@ Eg. discount -->
     isAdHoc                (yes)          #IMPLIED
     parentLineNumber       %uint;         #IMPLIED
     itemType               %lineItemType; #IMPLIED
+    requiresServiceEntry    (yes)          #IMPLIED
+    confirmationDueDate    %date;         #IMPLIED
+    compositeItemType      %compositeItemType;	#IMPLIED
+    itemCategory           (subcontract | consignment)       #IMPLIED
 >
+
+
+<!--
+    The representation of the release information of a line item
+
+    releaseType
+        a string value to identify the type of release.  The value will be either jit or forecast
+    cumulativeReceivedQuantity
+        a number value to identify the cumulative quantity of all goods receipts against the scheduling agreement over a period up to a certain date
+    materialGoAheadEndDate
+        Date denoting the end of the material go-ahead period (go-ahead for purchase of input materials)
+    productionGoAheadEndDate
+        Date denoting the end of the production go-ahead period
+-->
+<!ELEMENT ReleaseInfo (UnitOfMeasure, ShipNoticeReleaseInfo?, Extrinsic*)>
+<!ATTLIST ReleaseInfo
+    releaseType                 (forecast | jit)  #REQUIRED
+    cumulativeReceivedQuantity  %r8;              #REQUIRED
+    productionGoAheadEndDate    %datetime.tz;     #IMPLIED
+    materialGoAheadEndDate      %datetime.tz;     #IMPLIED
+>
+
+<!--
+    The ShipNoticeReleaseInfo will be used to reference a ship notice created from a scheduling agreement release. 
+
+    receivedQuantity 
+        Quantity received by the buyer for the referenced ship notice
+-->
+<!ELEMENT ShipNoticeReleaseInfo ((ShipNoticeReference|ShipNoticeIDInfo), UnitOfMeasure)>
+<!ATTLIST ShipNoticeReleaseInfo
+    receivedQuantity            %r8;              #REQUIRED
+>
+
 
 <!--
     The representation of a line item as it needs to be for sending to a
@@ -2058,6 +2535,8 @@ Eg. discount -->
 	    Position of the parent line item. Used to create a nesting structure for line items.
     itemType 
     	specify whether the line item contains child line items or acts as a child item
+	compositeItemType
+		specify type of parent line item(lot/box)
 -->
 <!ELEMENT ItemIn (ItemID, Path?, ItemDetail, (SupplierID | SupplierList)?, ShipTo?, Shipping?, Tax?, SpendDetail?,
                    Distribution*, Contact*, Comments?, BillTo?)>
@@ -2066,8 +2545,96 @@ Eg. discount -->
     lineNumber       %uint;         #IMPLIED
     parentLineNumber %uint;         #IMPLIED
     itemType         %lineItemType; #IMPLIED
-
+	compositeItemType      %compositeItemType;	#IMPLIED
 >
+
+<!--
+Defines SubcontractingComponent  information.
+
+ComponentID
+An identifier for a subcontracting component within the procurement process
+
+Description
+Description of subcontracting component
+
+Product
+It contains product information of subcontracting component (such as buyer product id, supplier product id, standard product id, internal product id…etc.)
+
+ProductRevisionID
+An identifier that is assigned when changes are made to component
+
+Batch
+An element carrying a batch information for material or goods  produced in a single manufacturing run (such as buyer/supplier batch id, production date, property valuation…etc.)
+
+UnitOfMeasure
+Unit of measure code
+
+quantity
+Quantity of the subcontracting component required to produce the finished goods in a unit of measurement
+
+requirementDate
+Specifies the date on which the requested quantity of subcontracting component is required
+-->
+<!ELEMENT SubcontractingComponent (ComponentID, UnitOfMeasure, Description?, Product?, ProductRevisionID?, Batch?)>
+<!ATTLIST SubcontractingComponent
+quantity          	%r8;           		#REQUIRED
+requirementDate  	%datetime.tz;  		#IMPLIED
+>
+
+<!--
+    Defines Schedule Line information.
+
+    quantity
+        Quantity of items to be shipped for this schedule line.         
+
+    requestedDeliveryDate
+        Date that the specified quantity is expected to be delivered. 
+		
+	lineNumber
+        Line identifier for a specific schedule line.
+
+    UnitOfMeasure
+        Unit of Measure for specified quantity.
+		
+	deliveryWindow
+		Duration of time in which the quantity is expected to be delivered.
+
+    SubcontractingComponent
+        Contains detailed information about a subcontracting component which is used to manufacture the finished goods
+
+-->
+<!ELEMENT ScheduleLine (UnitOfMeasure, ScheduleLineReleaseInfo?, SubcontractingComponent*, Extrinsic*)>
+<!ATTLIST ScheduleLine
+    quantity               %r8;           #REQUIRED
+    requestedDeliveryDate  %datetime.tz;  #REQUIRED
+	lineNumber  		   %uint;  		  #IMPLIED
+	deliveryWindow         %duration;     #IMPLIED
+>
+
+<!--
+    Defines release information on schedule line.
+
+    commitmentCode
+        String value to identify the type of the delivery. The value will be
+	firm – go ahead for production. Vendor can ship against the schedule line and customer is 
+		responsible for cost of production as well as cost of material procurement 
+	tradeoff – go ahead for material procurement. Vendor can ship against the schedule 
+		line if rule is enabled. Buyer is responsible for cost of material procurement
+	forecast – informational. Customer can change the schedule line without incurring any
+		liabilities  with the vendor
+
+    cumulativeScheduledQuantity
+        Total quantity to be shipped for a particular line item up through the schedule line
+-->
+
+<!ELEMENT ScheduleLineReleaseInfo (UnitOfMeasure)>
+<!ATTLIST ScheduleLineReleaseInfo
+    commitmentCode              (firm | tradeoff | forecast)  #REQUIRED
+    cumulativeScheduledQuantity %r8;                          #REQUIRED
+>
+
+
+
 
 <!--
     StatusUpdate for Confirmation (type=RequestToPay) request.
@@ -2130,6 +2697,12 @@ Eg. discount -->
 >
 	
 <!-- OrderRequest* Elements -->
+<!--  
+  Specifies the earliest date when either the supplier can deliver the goods or when the receiver is able to handle incoming shipments, 
+  and  the latest date when either the supplier can deliver the goods OR until the receiver is able to handle incoming shipments. 
+-->
+<!ELEMENT DeliveryPeriod (Period)>
+
 <!--
     Definition of an order.  This is the data that is sent to the supplier
     to have them place an order in their order management system. The new
@@ -2173,6 +2746,7 @@ Eg. discount -->
         to shipping when available if not specified.  Future versions of the
         protocol may extend the datatype of this attribute to include
         additional possible values (such as "unlessGreatlyBackOrdered"?).
+
     orderType
         "release", indicates that this is a Release Order from an existing
 	Master Agreement/ Contract. Default is regular. Type "blanket" indicates
@@ -2200,6 +2774,12 @@ Eg. discount -->
 
     parentAgreementPayloadID
         Optional PayloadID for the corresponding Master Agreement.
+        
+    pickUpDate
+  	Specifies the date when the goods can be/will be provided for picking up and delivery
+
+    requestedDeliveryDate
+	The requested delivery date reflects the time when the buyer is willing to receive the goods.
 
     Total 
 	If the Order is of type "blanket", the Total element is not used to compute
@@ -2208,6 +2788,15 @@ Eg. discount -->
 	level sub total or MaxAmounts. The item level MaxAmounts should not exceed the
 	header level total. If the item level MaxAmount is not specified it is assumed
 	that the Item level maximum amount is the same as the Total.
+    
+     DeliveryPeriod
+     	Start and end date for the delivery.
+     	
+     IdReference
+       ID reference is Within the application context (for example,
+a certain pair of buyer and supplier), 
+       the (identifier, domain) pair
+ should be unique.
 
     The contained DocumentReference element would appear in a document only
     when the type is "update" or "delete".  In that case, the
@@ -2219,7 +2808,7 @@ Eg. discount -->
 -->
 <!ELEMENT OrderRequestHeader (Total, ShipTo?, BillTo, Shipping?, Tax?,
                               Payment?, PaymentTerm*, Contact*, Comments?, Followup?,
-                              DocumentReference?, SupplierOrderInfo?,  TermsOfDelivery?, Extrinsic*)>
+                              DocumentReference?, SupplierOrderInfo?,  TermsOfDelivery?, DeliveryPeriod?, IdReference*, Extrinsic*)>
 <!ATTLIST OrderRequestHeader
     orderID    %string;        #REQUIRED
     orderDate  %datetime.tz;   #REQUIRED
@@ -2236,6 +2825,8 @@ Eg. discount -->
     agreementPayloadID %string; #IMPLIED
     requisitionID   %string;   #IMPLIED
     shipComplete    (yes)      #IMPLIED
+    pickUpDate    %datetime.tz;   #IMPLIED
+    requestedDeliveryDate     %datetime.tz;   #IMPLIED
 >
 <!--
     Definition of a Master Agreement.  This is the electronic document representing the 
@@ -2470,8 +3061,45 @@ Eg. discount -->
 
 -->
 <!ENTITY % cxml.statuses  "(PaymentStatus |
-			    SourcingStatus | InvoiceStatus)">
+			    SourcingStatus | InvoiceStatus | DocumentStatus)">
 <!ELEMENT StatusUpdateRequest  (DocumentReference?, Status, (%cxml.statuses;)?, Extrinsic*)>
+
+<!--
+    Status Update for Document Status
+
+        DocumentInfo
+            ID of a document entry known to the system. This attribute is used to reference a document in StatusUpdateRequest when DocumentReference is omitted.
+
+    Comments
+        Comments associated with the status update.
+
+    type
+        Type of the document status.
+-->
+
+<!ELEMENT DocumentStatus (DocumentInfo?, Comments*)>
+<!ATTLIST DocumentStatus
+        type              %string;               #REQUIRED
+        >
+
+<!--
+    Defines the ID of a document known to the system.
+
+    DocumentID
+        The id of a document known to the system.
+
+    DocumentType
+        The document type.
+
+    DocumentDate
+        The document date.
+-->
+<!ELEMENT DocumentInfo EMPTY>
+<!ATTLIST DocumentInfo
+        documentID              %string;               #REQUIRED
+        documentType            %string;               #REQUIRED
+        documentDate            %datetime.tz;          #IMPLIED
+        >
 
 <!--
     A reference to an attachment containing cXML document. 
@@ -2603,7 +3231,7 @@ xml:lang %xmlLangCode; #REQUIRED>
 -->
 <!ELEMENT TransportTerms (#PCDATA)>
 <!ATTLIST TransportTerms
-    valueRHT2 %string; #REQUIRED
+    value %string; #REQUIRED
 >
 
 <!--
@@ -2635,7 +3263,7 @@ xml:lang %xmlLangCode; #REQUIRED>
 -->
 <!ELEMENT ShippingPaymentMethod (#PCDATA)>
 <!ATTLIST ShippingPaymentMethod
-    valueRHT3 %string; #REQUIRED
+    value %string; #REQUIRED
 >
 
 <!--
@@ -2657,7 +3285,7 @@ xml:lang %xmlLangCode; #REQUIRED>
 -->
 <!ELEMENT TermsOfDeliveryCode (#PCDATA)>
 <!ATTLIST TermsOfDeliveryCode
-    valueRHT4 %string; #REQUIRED
+    value %string; #REQUIRED
 >
  
 <!--
@@ -2688,11 +3316,216 @@ xml:lang %xmlLangCode; #REQUIRED>
             the other terms.
 -->
 <!ELEMENT TermsOfDelivery (TermsOfDeliveryCode, ShippingPaymentMethod, TransportTerms?, Address?, Comments*)>
-    <!--
+
+<!--
+	SealID
+		A seal is used to preserve integrity of a transport or cargo shipment. Seals come in different versions and technical approaches with one common characteristic: a unique ID given by the owner or the responsible party. The SealID is used to internationally track a container, truck, vessel or other cargo property along the route.
+-->
+<!ELEMENT SealID (#PCDATA)>
+<!--
+	SealingPartyCode
+		Is the company code for the party that has given the seal in its ID (usually the owner of the goods or the freight forwarder that loaded the cargo.
+-->
+<!ELEMENT SealingPartyCode (#PCDATA)>
+<!--
+	EquipmentIdentificationCode
+		Mainly for internal transport and storage purposes the packing equipment is or will be marked with unique codes in order to monitor and manage movement and storage location. Coding can be temporarily or permantent (with GUID-like codes or RFID coding, but unique within the local addressing scheme.
+-->
+<!ELEMENT EquipmentIdentificationCode (#PCDATA)>
+<!--
+    The terms for transportation of the shipment. 
+
+	SealID
+		A seal is used to preserve integrity of a transport or cargo shipment. Seals come in different versions and technical approaches with one common characteristic: a unique ID given by the owner or the responsible party. The SealID is used to internationally track a container, truck, vessel or other cargo property along the route.
+	
+	SealingPartyCode
+		Is the company code for the party that has given the seal in its ID (usually the owner of the goods or the freight forwarder that loaded the cargo.
+	
+	EquipmentIdentificationCode
+		Mainly for internal transport and storage purposes the packing equipment is or will be marked with unique codes in order to monitor and manage movement and storage location. Coding can be temporarily or permantent (with GUID-like codes or RFID coding, but unique within the local addressing scheme.
+-->
+<!ELEMENT TermsOfTransport (SealID?, SealingPartyCode?, EquipmentIdentificationCode?, TransportTerms?, Dimension*, Extrinsic*)>
+
+<!--   Industry specific item information -->
+<!ELEMENT ItemOutIndustry (ItemOutRetail?)>
+
+<!--    Retails industry item information 
+	PromotionVariantID
+	Used when only one or some variants of an article are promoted
+
+	PromotionDealID 
+	Number assigned by a supplier to a special promotion activity. Promotions affect the forward planning/ordering process (and the related pricing)
+-->
+<!ELEMENT ItemOutRetail (PromotionVariantID?, PromotionDealID?)> 
+
+<!--
+    Details about the packaging of this line item.
+
+    Zero or more PackagingCode elements may appear in the Packaging
+    element.  Each PackagingCode must contain a single string corresponding
+    to the packaging for this item.  When multiple PackagingCode elements
+    appear, all must describe the same packaging in different languages or
+    locales.  (No two PackagingCode elements may have the same xml:lang
+    attribute.)  Elements in such a list may appear in any order.
+
+    The dimensions mentioned in the Dimension element list may appear in
+    any order.  A particular dimension (Dimension@type attribute value)
+    must not appear more than once in a Packaging element.
+    
+    	Description
+        	The Package description.
+
+	PackagingLevelCode
+	Describes the level (inner, outer, intermediate) for packages.
+	
+	PackageTypeCodeIdentifierCode 
+	Unique ID of packaging material. This helps receiving side for unloading and storage.
+	
+	ShippingContainerSerialCode
+	Serial number of a package that helps to identify package during transportation and inventory.
+    
+    ShippingContainerSerialCodeReference
+    Reference from a package with shipping code to the shipping code of the next higher package level. It references the parent ShippingContainerSerialCode.
+	
+	PackageID
+	Package related IDs.
+	
+	ShippingMark
+	Information about packaging proposals and packaging hierarchy.
+	
+	OrderedQuantity
+	The quantity ordered in purchase order.
+	
+	DispatchQuantity
+	The dispatch quantity in package.
+	
+	FreeGoodsQuantity
+	Quantities delivered but not charged. 
+	
+	QuantityVarianceNote
+	Quantity Variance Note gives detailed information about partial delivery.
+	
+	BestBeforeDate
+	Gives the best before date for all goods related to food, drugs, chemicals and others.
+
+-->
+<!ELEMENT Packaging (((PackagingCode+, Dimension*) | Dimension+), Description?, 
+				PackagingLevelCode?, PackageTypeCodeIdentifierCode?, ShippingContainerSerialCode?, 
+                ShippingContainerSerialCodeReference?,
+				PackageID?, ShippingMark*, OrderedQuantity?, DispatchQuantity?, 
+				FreeGoodsQuantity?, QuantityVarianceNote?, BestBeforeDate?, Extrinsic*)>
+
+<!--
+    One language-specific code for the packaging of this item.  Values such
+    as "pallet", "skid" and "truck load" may be appropriate (for an
+    English-based locale).
+
+    xml:lang
+        The language or locale in which the PackagingCode content (the
+        value of the code) is written.
+-->
+<!ELEMENT PackagingCode (#PCDATA)>             <!-- string -->
+<!ATTLIST PackagingCode
+    xml:lang             %xmlLangCode;         #REQUIRED
+>
+
+<!--
+    A single dimension for the packaging. It also can be used to define item dimensions.
+    quantity
+        Size in this dimension.  Expressed in the units given in the UnitOfMeasure element.
+    type
+        Type of dimension.  Supported values include:
+        length - The length of the packaging or item.
+        width - The width of the packaging or item.
+        height - The height of the packaging or item.
+        weight - The weight  or net weight of the packaging or item.
+        volume - The volume or net volume of the packaging or item.
+        stackHeight -The stack height of packaging. This indicates total height of the stacked packages. 
+        grossWeight - The gross weight is the total weight including packaging.
+        grossVolume -The gross volume is the total volume including packaging. 
+        unitGrossWeight  - The unit gross weight of the item.
+        unitNetWeight  -The unit net weight of the item.
+-->
+<!ELEMENT Dimension (UnitOfMeasure)>
+<!ATTLIST Dimension
+    quantity             %r8;                        #REQUIRED
+    type (length | width | height | weight | volume | stackHeight | grossWeight | grossVolume | unitGrossWeight | unitNetWeight ) #REQUIRED
+>
+
+
+<!-- Describes the level (inner, outer, intermediate) for packages. It is used in logistics for loading and unloading information. This information qualifies the 
+packing level within the packing hierarchy. -->
+
+<!ELEMENT PackagingLevelCode (#PCDATA)>
+
+<!-- This is a unique ID of packaging materials like box, container, pallet and rack. This helps receiving side for unloading and storage. This also defines the 
+maximum load or weight of articles -->
+
+<!ELEMENT PackageTypeCodeIdentifierCode (#PCDATA)>
+
+<!--This identifies a package during transport and in inventory. Serial number of a packaging unit like container, box and rack -->
+<!ELEMENT ShippingContainerSerialCode (#PCDATA)>
+
+<!--
+Reference from a package with shipping code to the shipping code of the next higher package level. It references the parent ShippingContainerSerialCode.
+-->
+<!ELEMENT ShippingContainerSerialCodeReference (#PCDATA)>
+
+
+<!-- Unique ID for a package.  GIAI, numbering scheme of GS1 specifying the ownership of an asset.-->
+<!ELEMENT GlobalIndividualAssetID (#PCDATA)>
+
+
+<!-- The ID that helps supplier with handling of any returned package.-->
+<!ELEMENT ReturnablePackageID (#PCDATA)>
+
+<!-- The information to track packages based on an internal numbering scheme of the supplier. -->
+<!ELEMENT PackageTrackingID (#PCDATA)>
+
+<!-- Packaging related IDs.-->
+<!ELEMENT PackageID (GlobalIndividualAssetID?,ReturnablePackageID?,PackageTrackingID?)>
+
+<!-- This contains codes for packaging proposals and packaging hierarchy. Also can contain marking for containers/packages that need special signing or handling 
+(hazardous goods, explosives and maximum stack size)-->
+
+<!ELEMENT ShippingMark (#PCDATA)>
+
+
+<!--This is the ordered quantity from purchase order. -->
+<!ELEMENT OrderedQuantity (UnitOfMeasure?) >
+<!ATTLIST OrderedQuantity
+    quantity	%r8;	#IMPLIED>
+
+<!-- The dispatch quantity in package.-->
+<!ELEMENT DispatchQuantity (UnitOfMeasure?)  >
+<!ATTLIST DispatchQuantity
+    quantity        %r8;       #IMPLIED>
+
+<!--  Quantities delivered but not charged. These can be samples or promotions or just "fill up" articles. These will not be on the commercial invoice (or marked with value 0.00)  -->
+<!ELEMENT FreeGoodsQuantity (UnitOfMeasure?)  >
+<!ATTLIST FreeGoodsQuantity
+    quantity        %r8;       #IMPLIED>
+
+
+<!-- Detailed information about partial delivery. Used for different measurements (1 lot = 500 pieces) -->
+<!ELEMENT QuantityVarianceNote (#PCDATA)>
+
+<!-- The best before date helps with in FDA-related deliveries for go/no-go criteria. This can be used to indicate best before date for all goods related to food, drugs, chemicals etc. -->
+<!ELEMENT BestBeforeDate EMPTY>
+<!ATTLIST BestBeforeDate
+      date         %datetime.tz;    #REQUIRED>
+      
+<!-- The expiry date  can be used to indicate expiry date for all goods related to food, drugs, chemicals etc. -->
+<!ELEMENT ExpiryDate EMPTY>
+<!ATTLIST ExpiryDate
+      date         %datetime.tz;    #REQUIRED>
+
+    
+<!--
     For cXML license agreement information, please see
     http://www.cxml.org/home/license.asp
 
-    $Id: //ariba/cxml/schema/Modules/Transaction.mod#5 $
+    $Id$
 -->
 
 <!--
@@ -2767,8 +3600,27 @@ xml:lang %xmlLangCode; #REQUIRED>
 <!ATTLIST PCard
     number      %number;  #REQUIRED
     expiration  %date;    #REQUIRED
-    nameRHT7        %string;  #IMPLIED
+    name        %string;  #IMPLIED
 >
+
+<!--
+    TotalCharges represents the total sum of all the charges  applied on the goods and 
+    services. This can appear at the  line item and summary in an invoice.
+-->
+<!ELEMENT TotalCharges (Money)>
+
+<!--
+    TotalAllowances represents the total sum of all the allowances applied on the goods and 
+    services. This can appear at the  line item and summary in an invoice.
+-->
+<!ELEMENT TotalAllowances (Money)>
+
+<!--
+    TotalAmountWithoutTax represents the sum of the SubTotal, Charges (including special handling 
+    charges and shipping charges), Allowances (including discounts). This does not include taxes.
+    This can appear at the  line item and summary in an invoice.
+-->
+<!ELEMENT TotalAmountWithoutTax (Money)>
 
 <!--
     For cXML license agreement information, please see
@@ -2906,7 +3758,7 @@ xml:lang %xmlLangCode; #REQUIRED>
     For cXML license agreement information, please see
     http://www.cxml.org/home/license.asp
 
-    $Id: //ariba/cxml/schema/Modules/Reference.mod#8 $
+    $Id: //ariba/cxml/release/schema/1.2.28.2+/Modules/Reference.mod#5 $
 -->
 
 <!--
@@ -3003,17 +3855,27 @@ xml:lang %xmlLangCode; #REQUIRED>
     In InvoiceDetailRequest, this element identifies the master agreement
     of the release order to be invoiced.
 
+
+    IdReference
+         Additional reference ID for MasterAgreement.
+
     agreementID
         The id of a master agreement known to the buyer system.  Basically,
         what the master agreement number is today.
 
     agreementDate
         The date and time the master agreement request was created.
+
+    agreementType
+        The type of the master agreement being referenced, for example: Scheduling Agreement
+
 -->
-<!ELEMENT MasterAgreementIDInfo EMPTY>
+<!ELEMENT MasterAgreementIDInfo (IdReference*)>
 <!ATTLIST MasterAgreementIDInfo
     agreementID              %string;               #REQUIRED
     agreementDate            %datetime.tz;          #IMPLIED
+    agreementType            (scheduling_agreement) #IMPLIED
+
 >
 
 <!--
@@ -3030,11 +3892,15 @@ xml:lang %xmlLangCode; #REQUIRED>
 
     agreementDate
         The date and time the master agreement request was created.
+
+    agreementType
+	The type of the master agreement being referenced, for example: Scheduling Agreement
 -->
 <!ELEMENT MasterAgreementReference (DocumentReference)>
 <!ATTLIST MasterAgreementReference
-    agreementID              %string;              #IMPLIED
-    agreementDate            %datetime.tz;         #IMPLIED
+    agreementID              %string;               #IMPLIED
+    agreementDate            %datetime.tz;          #IMPLIED
+    agreementType            (scheduling_agreement) #IMPLIED
 >
 
 <!--
@@ -3075,6 +3941,10 @@ xml:lang %xmlLangCode; #REQUIRED>
     different names for shipment identifiers.  Some call it a way bill
     number, others call it a pro number, and still others call it a bill of
     lading.  They all represent tracking numbers.
+    
+    domain
+        Specifies more precisely what kind of identifier this is.
+        Likely values include trackingNumber, billOfLading. 
         
     trackingNumberDate
         The date when the logistics provider intimates the tracking number 
@@ -3084,6 +3954,7 @@ xml:lang %xmlLangCode; #REQUIRED>
 -->
 <!ELEMENT ShipmentIdentifier (#PCDATA)>        <!-- string -->
 <!ATTLIST ShipmentIdentifier
+    domain                %string;         #IMPLIED
     trackingNumberDate    %datetime.tz;    #IMPLIED
 >
 
@@ -3141,10 +4012,14 @@ xml:lang %xmlLangCode; #REQUIRED>
 
     orderID
         Supplier sales order id of this order.
+        
+    orderDate
+        The date and time the sales order was created.
 -->
 <!ELEMENT SupplierOrderInfo EMPTY>
 <!ATTLIST SupplierOrderInfo
     orderID              %string;               #REQUIRED
+    orderDate          %datetime.tz;      #IMPLIED
 >
 
 
@@ -3172,21 +4047,95 @@ xml:lang %xmlLangCode; #REQUIRED>
 <!-- 
     Defines ID of a Ship Notice known to the Buyer system.
  
+ 
+    IdReference
+	Additional reference ID for shipment related IDs e.g. DispatchAdviceID, ReceivingAdviceID, DeliveryNoteId, ProofOfDeliveryID.
+
     shipNoticeID
         Unique identifier of the referenced ShipNoticeRequest.
 
     shipNoticeDate
         Date and time of the referenced ShipNoticeRequest.
 -->
-<!ELEMENT ShipNoticeIDInfo EMPTY>
+<!ELEMENT ShipNoticeIDInfo (IdReference*)>
 <!ATTLIST ShipNoticeIDInfo
     shipNoticeID              %string;               #REQUIRED
     shipNoticeDate            %datetime.tz;          #IMPLIED
-><!--
+>
+
+<!--
+    The OrderStatusRequestReference element provides a clear reference to a prior
+    OrderStatusRequest document.
+
+    orderStatusRequestID
+        The buyer system orderStatusRequestID for this request. If present, must be copied
+        directly from the referenced OrderStatusRequest document's
+        OrderStatusRequestHeader.
+
+    orderStatusRequestDate
+        The order status request date.
+-->
+<!ELEMENT OrderStatusRequestReference (DocumentReference)>
+<!ATTLIST OrderStatusRequestReference
+    orderStatusRequestID              %string;               #IMPLIED
+    orderStatusRequestDate            %datetime.tz;          #IMPLIED
+>
+
+<!--
+    Defines the ID of an order status request known to the buyer system.
+
+    orderStatusRequestID
+        The id of an order status request known to the buyer system.
+
+    orderStatusRequestDate
+        The order status request date.
+-->
+<!ELEMENT OrderStatusRequestIDInfo EMPTY>
+<!ATTLIST OrderStatusRequestIDInfo
+    orderStatusRequestID              %string;               #REQUIRED
+    orderStatusRequestDate            %datetime.tz;          #IMPLIED
+>
+
+<!--
+    The ReceiptReference element provides a clear reference to a prior
+    ReceiptRequest document.
+
+    receiptID
+        The buyer system receiptID for this request.
+        If present, must be copied directly from the
+        referenced ReceiptRequest document's ReceiptRequestHeader.
+
+    receiptDate
+        The date and time the receipt request was created. If present, must
+        be copied directly from the referenced ReceiptRequest document's
+        RequestRequestHeader.
+-->
+<!ELEMENT ReceiptReference (DocumentReference) >
+<!ATTLIST ReceiptReference
+    receiptID              %string;              #IMPLIED
+    receiptDate            %datetime.tz;         #IMPLIED
+>
+
+<!--
+    Defines the ID of a receipt known to the buyer system.
+
+    receiptID
+        The id of an receipt known to the buyer system.
+
+    receiptDate
+        The date and time the order was created.
+-->
+<!ELEMENT ReceiptIDInfo (IdReference*)>
+<!ATTLIST ReceiptIDInfo
+    receiptID              %string;               #REQUIRED
+    receiptDate            %datetime.tz;          #IMPLIED
+>
+
+<!--
     For cXML license agreement information, please see
     http://www.cxml.org/home/license.asp
-
-    $Id: //ariba/cxml/schema/Modules/Fulfill.mod#9 $
+    
+    $Id: //ariba/cxml/release/schema/1.2.28.2+/Modules/Fulfill.mod#8 $
 -->
 
 <!-- ====
@@ -3195,10 +4144,13 @@ xml:lang %xmlLangCode; #REQUIRED>
 
 <!ENTITY % cxml.requests "(ConfirmationRequest |
                            ShipNoticeRequest |
+                           ServiceEntryRequest |
                            CopyRequest |
 			   TimeCardInfoRequest |
 			   ReceiptRequest |
-                           TimeCardRequest)"
+               OrderStatusRequest |
+                           TimeCardRequest |
+                           ComponentConsumptionRequest)"
 >
 
 <!ENTITY % cxml.responses "">
@@ -3244,6 +4196,38 @@ xml:lang %xmlLangCode; #REQUIRED>
     document.
 ==== -->
 
+<!-- OrderStatusRequest Elements -->
+<!--
+    Definition of an order status request.  This is the data that is sent to the supplier to ask 
+    for information regarding a previously sent PO such as the status of the order, delivery date 
+    or current location of a shipped product.
+-->
+<!ELEMENT OrderStatusRequest (OrderStatusRequestHeader, OrderStatusRequestItem*)>
+    
+<!-- OrderStatusRequestHeader Elements -->
+<!--
+    Header of an order status request. It contains the reference to the orderStatusRequest 
+    (OrderStatusRequestID, OrderStatusRequestDate) from the buyer side.
+
+    OrderStatusRequestID
+        The buyer system ID for this status request. This is an internal buyer unique number.
+
+    OrderStatusRequestDate
+        date and time when the order status request was created.
+
+-->
+<!ELEMENT OrderStatusRequestHeader ((OrderReference | OrderIDInfo),Contact+, Comments?, Extrinsic*)>
+<!ATTLIST OrderStatusRequestHeader
+    orderStatusRequestID    %string;        #REQUIRED
+    orderStatusRequestDate  %datetime.tz;   #REQUIRED
+>
+
+<!-- OrderStatusRequestItem* Elements -->
+<!--
+   Represent an item on the Order Status Request. 
+-->
+<!ELEMENT OrderStatusRequestItem (ItemReference, Comments?)>
+
 <!--
     Request to add confirmation information to the data known about an
     order at the receiving server.
@@ -3257,6 +4241,9 @@ xml:lang %xmlLangCode; #REQUIRED>
     confirmation with one of these types arrives, the receiving system must
     discard any and all previous confirmations for the order.
 
+    OrderStatusRequestReference or OrderStatusRequestIDInfo can be optionally added to
+    explicitly reference to the Order Status Request that originated the confirmation.
+
     ConfirmationItem elements may appear in any order within the
     ConfirmationRequest.  Of course, an easily-readable order such as by
     increasing lineNumber value is preferred.  Again, no line item
@@ -3264,7 +4251,7 @@ xml:lang %xmlLangCode; #REQUIRED>
     within a ConfirmationRequest element.
 -->
 <!ELEMENT ConfirmationRequest
-    (ConfirmationHeader, OrderReference, ConfirmationItem*)>
+    (ConfirmationHeader, OrderReference, (OrderStatusRequestReference | OrderStatusRequestIDInfo)*, ConfirmationItem*)>
 
 <!--
     Information about this confirmation that's common to all contained
@@ -3527,6 +4514,9 @@ xml:lang %xmlLangCode; #REQUIRED>
             fas - Free alongside ship
             fca - Free carrier
             fob - Free on board vessel
+    version
+        The version number for this confirmation. It should start with 1 and
+        should be incremented by 1 for each subsequent version (2,3,4...).
 -->
 <!ELEMENT ConfirmationHeader (DocumentReference?, Total?, Shipping?,
                               Tax?, Contact*, Hazard*, Comments*,
@@ -3540,6 +4530,7 @@ xml:lang %xmlLangCode; #REQUIRED>
     invoiceID            %string;                        #IMPLIED
     incoTerms (cfr | cif | cip | cpt | daf | ddp | ddu | deq | des | exw |
                fas | fca | fob)                          #IMPLIED
+    version              %uint;                          #IMPLIED
 >
 
 <!--
@@ -3588,7 +4579,8 @@ xml:lang %xmlLangCode; #REQUIRED>
         lineNumber of the parent line item in the order confirmation request.
     itemType
         specify whether the line item contains child line items or acts as a child item
-
+	compositeItemType
+		specify type of parent line item(lot/box)
 -->
 <!ELEMENT ConfirmationItem
     (UnitOfMeasure, Contact*, Hazard*, ConfirmationStatus+)>
@@ -3597,6 +4589,7 @@ xml:lang %xmlLangCode; #REQUIRED>
     lineNumber           %uint;                #REQUIRED
     parentLineNumber     %uint;                #IMPLIED
     itemType             %lineItemType;        #IMPLIED
+	compositeItemType		%compositeItemType;		#IMPLIED
 >
 
 <!--
@@ -3653,6 +4646,11 @@ xml:lang %xmlLangCode; #REQUIRED>
     in this list and in the overall ConfirmationHeader element.  (The
     ConfirmationHeader must not contain a default extrinsic value
     overridden at this lower level.)
+
+    SupplierBatchID
+        SupplierBatch is the batch ID provided by the supplier at the line item quantity level
+        to identify  the batch in which the item or the product was produced. The batch id is helpful in tracebility.
+        Batch numbers (also call "lot number", "variant") are used in several industries to uniquely identify  items produced together.
 
     quantity
         Number of this line item which has this status.  Expressed in the
@@ -3735,7 +4733,7 @@ xml:lang %xmlLangCode; #REQUIRED>
         information if its type is "accept", "allDetail" or "detail".
 -->
 <!ELEMENT ConfirmationStatus (UnitOfMeasure, (ItemIn | (UnitPrice?, Tax?,
-                              Shipping?)), Comments*, Extrinsic*)>
+                              Shipping?)), SupplierBatchID?, Comments*, Extrinsic*)>
 <!ATTLIST ConfirmationStatus
     quantity             %r8;                             #REQUIRED
     type (accept | allDetail | detail | backordered | reject | unknown | requestToPay)
@@ -3837,7 +4835,7 @@ xml:lang %xmlLangCode; #REQUIRED>
     and with type as "TransitDirection" to specify transit direction.
     Reason for shipment is typically specified with replace/partial shipments to
     let the buyer know about the need of the shipment.
-
+    
     Elements in the Comments list may appear in any order.  The xml:lang
     attribute may have the same value in multiple Comments elements in the
     list.  The set of Comments with a particular xml:lang value should
@@ -3914,9 +4912,11 @@ xml:lang %xmlLangCode; #REQUIRED>
         The type of fulfillment, for which this shipment notice is created.
         The value of this attribute can be "partial" if all the items are
         not being shipped and "complete" if the whole order is being shipped.
+    requestedDeliveryDate
+        The date on which the items were requested to be delivered.
 -->
 <!ELEMENT ShipNoticeHeader (ServiceLevel*, DocumentReference?, Contact*,
-                            Hazard*, Comments*, TermsOfDelivery?, Extrinsic*, IdReference*)>
+                            Hazard*, Comments*, TermsOfDelivery?, TermsOfTransport*, Packaging?, Extrinsic*, IdReference*)>
 <!ATTLIST ShipNoticeHeader
     shipmentID           %string;              #REQUIRED
     operation          (new | update | delete) "new"
@@ -3925,6 +4925,7 @@ xml:lang %xmlLangCode; #REQUIRED>
     deliveryDate         %datetime.tz;         #IMPLIED
     shipmentType       (actual | planned)      #IMPLIED
     fulfillmentType    (partial | complete)    #IMPLIED
+    requestedDeliveryDate  %datetime.tz;  #IMPLIED
 >
 
 <!--
@@ -4004,7 +5005,7 @@ xml:lang %xmlLangCode; #REQUIRED>
         attribute must not appear in the first ShipControl element since it
         would duplicate the ShipNoticeHeader's shipmentDate attribute.
 -->
-<!ELEMENT ShipControl (CarrierIdentifier+, ShipmentIdentifier,
+<!ELEMENT ShipControl (CarrierIdentifier+, ShipmentIdentifier+,
                        PackageIdentification?, (Route|TransportInformation)*, Contact*, Comments*,
                        Extrinsic*)>
 <!ATTLIST ShipControl
@@ -4037,6 +5038,10 @@ xml:lang %xmlLangCode; #REQUIRED>
     mentioned in more than one ShipNoticePortion element.  While multiple
     shipments may be sent for one order, a ship notice must mention each
     order only once.
+
+    MasterAgreementReference or MasterAgreementIDInfo can be used to identify 
+    the corresponding scheduling agreement if the ship notice is generated
+    from a scheduling agreement release.
 
     Any Contact elements provided at this level describe contacts specific
     to this order.  The ShipNoticeHeader description mentions roles
@@ -4081,7 +5086,7 @@ xml:lang %xmlLangCode; #REQUIRED>
     information.
 -->
 <!ELEMENT ShipNoticePortion
-    (OrderReference, Contact*, Comments*, Extrinsic*, ShipNoticeItem*)>
+    (OrderReference, (MasterAgreementReference | MasterAgreementIDInfo)?,  Contact*, Comments*, Extrinsic*, ShipNoticeItem*)>
 
 <!--
     Portion of a specific line item that is part of this shipment.
@@ -4096,6 +5101,24 @@ xml:lang %xmlLangCode; #REQUIRED>
     listed at this level (in a ShipNoticeItem element) must apply to this
     specific line item.  A ShipNoticeRequest for a single line item should
     not include Hazard elements in the ShipNoticeItem element.
+    
+    ShipNoticeItemDetail contains detailed information about an item. All the data that
+    a user would want to see about an item instead of the bare essentials.
+    In a ship notice the item details are inherited from the purchase order 
+    that is referenced. For ship notices without order reference the item details 
+    can be retrieved from this section.
+
+    Batch
+    An element carrying batch information for material or goods  produced
+    in a single manufacturing run.
+
+    SupplierBatchID
+        SupplierBatch is the batch ID provided by the supplier at the line item quantity level 
+        to identify  the batch in which the item or the product was produced. The batch id is helpful in tracebility.
+        Batch numbers (also call "lot number", "variant") are used in several industries to uniquely identify  items produced together.
+
+    ComponentConsumptionDetails
+        Contains detailed information about consumption of components in the manufacturing of final product.
 
     quantity
         Number of this line item which was shipped.  Expressed in the units
@@ -4106,72 +5129,570 @@ xml:lang %xmlLangCode; #REQUIRED>
         referenced in the sibling OrderReference element.        
     parentLineNumber
        	lineNumber of the parent line item in the ship notice.
+    shipNoticeLineNumber
+       holds the ship notice line number, used in contexts where there are multiple ship notice line items for a single purchase order line items
     itemType
         specify whether the line item contains child line items or acts as a child item
+	compositeItemType
+		specify type of parent line item(lot/box)
+
+
 -->
-<!ELEMENT ShipNoticeItem (UnitOfMeasure, Packaging?, Hazard*, AssetInfo*, TermsOfDelivery?, Extrinsic*)>
+<!ELEMENT ShipNoticeItem (ItemID?, ShipNoticeItemDetail?,  UnitOfMeasure, Packaging*, Hazard*, (Batch | SupplierBatchID)?,
+				AssetInfo*, TermsOfDelivery?, OrderedQuantity?, ShipNoticeItemIndustry?, ComponentConsumptionDetails*, Extrinsic*)>
 <!ATTLIST ShipNoticeItem
     quantity             %r8;                  #REQUIRED
     lineNumber           %uint;                #REQUIRED
     parentLineNumber     %uint;                #IMPLIED
+    shipNoticeLineNumber     %uint;          #IMPLIED
     itemType             %lineItemType;        #IMPLIED
-
+	compositeItemType		%compositeItemType;		#IMPLIED
 >
 
-<!--
-    Details about the packaging of this line item.
-
-    Zero or more PackagingCode elements may appear in the Packaging
-    element.  Each PackagingCode must contain a single string corresponding
-    to the packaging for this item.  When multiple PackagingCode elements
-    appear, all must describe the same packaging in different languages or
-    locales.  (No two PackagingCode elements may have the same xml:lang
-    attribute.)  Elements in such a list may appear in any order.
-
-    The dimensions mentioned in the Dimension element list may appear in
-    any order.  A particular dimension (Dimension@type attribute value)
-    must not appear more than once in a Packaging element.
--->
-<!ELEMENT Packaging ((PackagingCode+, Dimension*) | Dimension+)>
 
 <!--
-    One language-specific code for the packaging of this item.  Values such
-    as "pallet", "skid" and "truck load" may be appropriate (for an
-    English-based locale).
+    ShipNoticeItemDetail contains detailed information about an item. All the data that
+    a user would want to see about an item instead of the bare essentials
+    that are represented in the ItemID.
+  
+In a ship notice the item details are inherited from the purchase order that is referenced. For ship notices without order reference the item details can be retrieved from this section.
 
-    xml:lang
-        The language or locale in which the PackagingCode content (the
-        value of the code) is written.
+UnitPrice
+    Price per unit of item.  Optional Modifications 
+    (changes due to discounts or fixed amount) may be provided.
+
+Description
+    Description is a string which describes something.
+
+UnitOfMeasure
+   Must be a UN/CEFACT (Recommendation 20) unit of measure code.
+
+PriceBasisQuantity
+    Define the quantity as quoted in the UnitPrice
+
+Classification
+    Classification is used to group items into similar categories.
+
+ManufacturerPartID
+    ID with which the item's manufacturer identifies the item.
+
+ManufacturerName
+    Name of the item's manufacturer.
+
+Dimension
+    Item dimensions.
+    
+ItemDetailIndustry
+    Industry  specfic item detail information.
 -->
-<!ELEMENT PackagingCode (#PCDATA)>             <!-- string -->
-<!ATTLIST PackagingCode
-    xml:lang             %xmlLangCode;         #REQUIRED
+<!ELEMENT ShipNoticeItemDetail (UnitPrice?, Description*, UnitOfMeasure?,     PriceBasisQuantity?, Classification*, ManufacturerPartID?,
+                      ManufacturerName?, Dimension*, ItemDetailIndustry?, Extrinsic*)>
+
+
+<!--
+    Defines the header information of a ServiceEntryRequest.
+
+    PartnerContact
+        All parties involved in this service entry sheet, including fieldContractor,
+        fieldEngineer and requester.
+    
+	DocumentReference        
+		The DocumentReference is optional and, if it is provided, it must reference 
+		the ServiceEntryRequest which is related to the current ServiceEntryRequest.
+	
+	DocumentInfo
+        ID of a document entry known to the system. This attribute is used to reference 
+		a document when DocumentReference is omitted. If both DocumentReference and 
+		DocumentInfo are provided, they must refer to the same ServiceEntryRequest.
+
+    ServiceEntryDetailLineIndicator
+        Header level indicators indicating certain information is
+        provided at SES line level (in ServiceEntryItem).
+	
+    ServiceEntryDetailShipping
+        The shipping details related with SES(auto-generate invoice).  It will be ignored if
+        isShippingInLine is true.
+	
+	ShipNoticeIDInfo
+       References shipment related document identifiers.
+	
+	PaymentTerm
+        This defines the payment terms for this invoice.
+	
+    Period
+        The total time period during which all the services specified in this service
+        entry sheet were rendered. Period at the header level does not imply anything
+        about the Period at the line level.
+
+    Comments
+        Comment text for this service entry sheet.
+
+    Extrinsic
+        Additional information related to this service entry sheet.  Extrinsic should not
+        duplicate any information in ServiceEntryRequestHeader or ServiceEntryRequest.
+
+    serviceEntryDate
+        The date and time when this service entry sheet was created, which should be
+        earlier than the document's timestamp.
+
+    serviceEntryID
+        A supplier-generated identifier for this service entry sheet, identical to the
+        SES Number which appears at the top of a physical service entry sheet.
+
+    supplierReferenceNumber
+		An internal reference to the supplier of this service entry sheet..
+
+operation
+        How this document is acting on the service entry sheet:
+        new - This document creates a new service entry sheet.
+        delete - This document cancels an existing service entry sheet.  That existing
+        service entry sheet must be specified as DocumentReference.
+        By default, it is "new".
+
+-->
+<!ELEMENT ServiceEntryRequestHeader (PartnerContact*,
+                                     (DocumentReference | DocumentInfo)?,
+                                     ServiceEntryDetailLineIndicator?,
+                                     ServiceEntryDetailShipping?,
+                                     ShipNoticeIDInfo?,
+                                     PaymentTerm*,
+                                     Period?,
+                                     Comments?,
+                                     Extrinsic*)>
+<!ATTLIST ServiceEntryRequestHeader
+    serviceEntryDate   %datetime.tz;        #REQUIRED
+    serviceEntryID     %string;             #REQUIRED
+    supplierReferenceNumber     %string; 	#IMPLIED
+    operation     (new | delete)            "new"
 >
 
+
 <!--
-    A single dimension for the packaging of this item.
+    Defines information related to a purchase order.
+
+    The various content options for ServiceEntryOrderInfo are in order
+    of preference. For example, OrderReference is strongly recommended.
+    If OrderReference is not available, OrderIDInfo should be used in that order.
+
+    OrderReference
+        The reference to the purchase order for the service.
+
+    OrderIDInfo
+        The buyer system order ID for the purchase order for the service.
+
+-->
+<!ELEMENT ServiceEntryOrderInfo
+    (OrderReference | OrderIDInfo)>
+
+
+
+<!--
+    Defines all references related to a line item in this service entry sheet.
+
+    ItemID
+		The service part number.
+
+    IdReference
+		Unique reference to part number.
+
+    Classification
+        The classification code for of the service.
+
+    Description
+        Textual description of the item.
+
+    lineNumber
+        The line number of the current line item referred to in OrderRequest.
+        For planned item, this refers to the corresponding item in purchase order.
+        For unplanned item, this refers to the parent item in purchase order.
+
+-->
+<!ELEMENT ItemReference (ItemID, IdReference*,Classification*, Description?)>
+<!ATTLIST ItemReference
+	lineNumber %uint; #REQUIRED
+>
+
+
+<!--
+    Defines a line item in the ServiceEntryRequest.
+
+    UnitRate
+        The rate at which the service item is charged.
+        Use of the UnitRate element is recommended over the plain (UnitOfMeasure, UnitPrice)
+        pair, since the UnitRate element includes the rate code. For some services such as
+        temporary labor services,  UnitRate is required.
+
+    UnitOfMeasure
+        The unit of measure.
+
+    UnitPrice
+        The unit price.
+     
+	PriceBasisQuantity
+        The price basis quantity. 		
+	 
+    ItemReference
+        The references related to this line item.
+
+    MasterAgreementReference
+        The reference to the corresponding contract master agreement if
+        the order for the service is a release purchase order.
+
+    MasterAgreementIDInfo
+        The buyer's system ID for the corresponding contract master agreement if
+        the order for the service is a release purchase order.
+
+    Period
+        The time period during which the service was rendered.
+
+    SubtotalAmount
+        The subtotal of the current item = unit price x serviced quantity.
+	
+	Tax
+        The tax info for this line item.  It will be ignored if isTaxInLine
+        is false.
+
+	GrossAmount
+        The SubtotalAmount plus taxes, shipping, and special handling
+        charges.
+	
+	ServiceEntryDetailLineSpecialHandling
+        The special handling info for this line item.  It will be ignored
+        if isSpecialHandlingInLine is false.
+
+    ServiceEntryDetailLineShipping
+        The shipping info for this line item.  It will be ignored if
+        isShippingInLine is false.
+
+    ShipNoticeIDInfo
+       References shipment related document identifiers.
+	
+	ServiceEntryDetailDiscount
+        The discount info for this line item.  It will be ignored if
+        isDiscountInLine is false.
+	
+	ServiceEntryItemModifications
+        the additional Charges, Allowances and their Taxes that are 
+        incurred for the total landed cost of the goods and service 
+        contained in this SES item.
+	
+	TotalCharges
+        The total sum of all the charges applied on the goods and 
+        services at the line item level in an SES.
+
+    TotalAllowances
+        The total sum of all the allowances applied on the goods and
+        services at the line item level in an SES.
+
+    TotalAmountWithoutTax
+        The total sum of the SubTotal, Charges (including special handling
+        charges and shipping charges), Allowances (including discounts) 
+        applied at the line item level in an SES. This does not include taxes.
+    
+    NetAmount
+        The GrossAmount minus discount amount.
+	
+    Distribution
+        Accounting distribution information, including cost center, GL#, etc.
+
+    Comments
+        Comment text for this line item.
+
+    Extrinsic
+        Additional information related to this line item.  Extrinsic should not
+        duplicate anything in ServiceEntryItem or ServiceEntryOrder.
+
+    serviceLineNumber
+        The supplier-defined ID for the current service line, which should be
+        unique for each service line in the same ServiceEntryRequest.
 
     quantity
-        Size in this dimension.  Expressed in the units given in the
-        UnitOfMeasure element.
+        The quantity serviced for the current line item.
+
     type
-        Type of dimension.  Supported values include:
-        length - The length of the packaging.
-        width - The width of the packaging.
-        height - The height of the packaging.
-        weight - The weight of the packaging.
-        volume - The volume of the packaging.
+        Specifies whether the current line item is material or service.
+	    Valid values are material and service.
 -->
-<!ELEMENT Dimension (UnitOfMeasure)>
-<!ATTLIST Dimension
-    quantity             %r8;                        #REQUIRED
-    type (length | width | height | weight | volume) #REQUIRED
+<!ELEMENT ServiceEntryItem ( ItemReference,
+                            (MasterAgreementReference | MasterAgreementIDInfo)?,
+				            (UnitRate | (UnitOfMeasure, UnitPrice, PriceBasisQuantity?))?,
+                            Period?, SubtotalAmount?,
+                            Tax?, GrossAmount?,
+                            ServiceEntryDetailLineSpecialHandling?,
+                            ServiceEntryDetailLineShipping?, ShipNoticeIDInfo?,
+                            ServiceEntryDetailDiscount?, ServiceEntryItemModifications?, 
+                            TotalCharges?, TotalAllowances?, TotalAmountWithoutTax?, NetAmount?,
+                            Distribution*, Comments*, Extrinsic*)>
+<!ATTLIST ServiceEntryItem
+    serviceLineNumber        %uint;         #REQUIRED
+    quantity                 %r8;           #REQUIRED
+    referenceDate            %datetime.tz;  #IMPLIED
+    inspectionDate           %datetime.tz;  #IMPLIED
+    type                 %serviceItemType;  #IMPLIED
 >
+
+
 <!--
+    Defines the service information for a purchase order or contract master agreement
+    with item details.
+
+    In this case, a line in a service entry sheet is a ServiceEntryItem and its
+    line number is ServiceEntryItem@serviceLineNumber.
+
+    ServiceEntryOrderInfo
+        The reference information for the purchase order or contract master agreement.
+
+    ServiceEntryItem
+        The information for an item in the purchase order.
+
+-->
+<!ELEMENT ServiceEntryOrder (ServiceEntryOrderInfo, ServiceEntryItem+)>
+
+
+<!--
+    Defines the summary information for a ServiceEntryRequest.
+
+    SubtotalAmount
+        The sum of amounts for all quantities.
+		
+	Tax
+        Tax info.
+	
+	SpecialHandlingAmount
+        Special handling charge.
+
+    ShippingAmount
+        Shipping charge.
+		
+	GrossAmount
+        Sum of subtotal, taxes, special handling
+        charges, and shipping charges, before discounts.
+	
+	ServiceEntryDetailDiscount
+        The total discount applied in this ServiceEntryRequest.
+        Its contained percentageRate attribute will be ignored
+        if isDiscountInLine is true.
+		
+	ServiceEntryHeaderModifications
+        the additional Charges, Allowances and their Taxes that are incurred
+        for the total landed cost of the goods and services within SES
+        header. This value specified at the header-level  is not the aggregated
+        value towards the charges or allowances available for the line items.
+	
+	ServiceEntrySummaryLineItemModifications
+		Summary of all modifications applied on the goods and services at the line item level in an service entry.
+		
+	TotalCharges
+        The total sum of all the charges applied on the goods and services at 
+        the header-level and  line item level in SES.
+
+    TotalAllowances
+        The total sum of all the allowances applied on the goods and services
+        at the header-level and  line item level in SES.
+
+    TotalAmountWithoutTax
+        The total sum of the SubTotal, Charges (including special handling charges
+        and shipping charges), Allowances (including discounts) applied at the 
+        header-level and  line item level in SES. This does not include taxes.
+	
+	NetAmount
+        Gross amount minus discounts.
+		
+	DepositAmount
+        Total deposit/prepayment amount.
+
+    DueAmount
+        Total amount due and payable.  It equals NetAmount minus
+        DepositAmount.  If ServiceEntryRequest@purpose is
+        "creditMemo" or "lineLevelCreditMemo", this amount must be
+        negative.  If ServiceEntryRequest@purpose is
+        "debitMemo", this amount must be positive.
+
+-->
+<!ELEMENT ServiceEntrySummary (SubtotalAmount, Tax?, SpecialHandlingAmount?,
+                               ShippingAmount?, GrossAmount?,
+                               ServiceEntryDetailDiscount?, ServiceEntryHeaderModifications?, ServiceEntrySummaryLineItemModifications?,
+                               TotalCharges?, TotalAllowances?, TotalAmountWithoutTax?, NetAmount?,
+                               DepositAmount?, DueAmount?)>
+
+
+<!--
+    ServiceEntryRequest
+    Transmits a service entry sheet request to a buyer, providing purchase order
+    references, line item references, partners involved, etc.
+
+    Suppliers can use a ServiceEntryRequest to send a service entry sheet for
+    any or all selected line items from a purchase order.
+
+    This document must be sent to the location specified in the buyer's
+    ProfileResponse.
+
+    ServiceEntryRequestHeader
+        The header information for this service entry sheet.
+
+    ServiceEntryOrder
+        The service entry sheet information for a purchase order with item details.
+
+    ServiceEntrySummary
+        The summary information for this service entry sheet.
+-->
+<!ELEMENT ServiceEntryRequest (ServiceEntryRequestHeader, ServiceEntryOrder, ServiceEntrySummary)>
+
+<!--
+    Retail specific elements are now grouped under this new element structure.
+    BestBeforeDate
+	The best-before-date helps with in FDA-related deliveries for go/no-go criteria. This is a common element and hence can be found in the common proposal.
+    ExpiryDate
+	ExpiryDate is used mainly in retail industries for FDA-related deliveries for go/no-go criteria.
+     FreeGoodsQuantity
+	Quantities delivered but not charged for; those can be samples or promotions or just "fill up" articles; has financial impact because those will not be on the commercial invoice (or marked with value 0.00)  
+      PromotionDealID
+	Number assigned by a supplier to a special promotion activity. Promotions affect the forward planning/ordering process (and the related pricing). The definition can be found in the common proposal.
+    
+    PromotionVariantID
+    Promotional variance info associated with the ship notice item.
+-->
+<!ELEMENT ShipNoticeItemRetail (BestBeforeDate?, ExpiryDate?, FreeGoodsQuantity?,  PromotionDealID?, PromotionVariantID?)>
+
+<!--
+    Industry specific elements are now grouped under this new element structure.
+-->
+<!ELEMENT ShipNoticeItemIndustry (ShipNoticeItemRetail?)>
+
+<!--
+    Defines discount applied.
+
+    Money
+        The total discount in dollar (or other currency) amount.
+
+    percentageRate
+        The discount rate in percentage.
+-->
+<!ELEMENT ServiceEntryDetailDiscount (Money)>
+<!ATTLIST ServiceEntryDetailDiscount
+    percentageRate          %r8;           #IMPLIED
+>
+
+<!--
+    ServiceEntryItemModifications represents the additional Charges and Allowances
+    that are incurred for the total landed cost of the goods and service 
+    contained in this SES item.
+ 
+    Modification
+        provides the details of a Charge or an Allowance.
+-->
+<!ELEMENT ServiceEntryItemModifications (Modification+)>
+
+<!--
+    Defines the shipping information related to SES (auto-generated invoice).
+
+    Contact
+        The ship from and ship to addresses. Both ship from and ship to
+        must be specified.  Allowed contact roles are shipFrom, shipTo and
+        carrierCorporate.
+
+    CarrierIdentifier
+        This list may include multiple identifiers for the same carrier.
+        Elements in this list may appear in any order.  A particular
+        identification domain (CarrierIdentifier@domain attribute
+        value) must not appear more than once in an ServiceEntryDetailShipping
+        element.  The identification provided by all elements of the
+        CarrierIdentifier list must correspond to the same company.
+
+    ShipmentIdentifier
+        The tracking number of this shipment or a bill of lading number,
+        depending on the domain attribute.
+
+    DocumentReference
+        The reference to an earlier ShipNoticeRequest.
+
+    shippingDate
+        The date and time this shipment leaves the supplier.
+-->
+<!ELEMENT ServiceEntryDetailShipping (Contact, Contact+,
+                                 (CarrierIdentifier+, ShipmentIdentifier+)?,
+                                 DocumentReference?)>
+
+<!--
+    ServiceEntryHeaderModifications represents the additional Charges, Allowances 
+    that are incurred for the total landed cost of the goods and services within 
+    the SES header. This value specified at the header-level is not the aggregated 
+    value towards the charges or allowances available for the line items.
+
+    Modification
+        provides the details of a Charge or an Allowance.
+-->
+<!ELEMENT ServiceEntryHeaderModifications (Modification+)>
+
+<!--
+    Defines SES line level indicators indicating certain
+    information is provided at SES line level (in ServiceEntryDetailItem).
+     By default, all indicators are false.
+
+    If an indicator indicates certain information (e.g. tax, shipping, etc.)
+    will be provided at SES line level, for SES lines which do
+    not provide such information, they will be assumed to have values of
+    zero, or "not available", whichever is appropriate, for that information.
+
+    isTaxInLine
+        True if tax info (Tax) is provided at SES line level.
+
+    isSpecialHandlingInLine
+        True if special handling info is provided at SES line level.
+
+    isShippingInLine
+        True if shipping info is provided at SES line level.
+
+    isDiscountInLine
+        True if discount info (ServiceEntryDetailDiscount) is provided
+        at SES line level.
+
+    isAccountingInLine
+        True if accounting distribution info (Distribution) is provided at
+        SES line level.
+-->
+<!ELEMENT ServiceEntryDetailLineIndicator EMPTY>
+<!ATTLIST ServiceEntryDetailLineIndicator
+    isTaxInLine                            (yes)      #IMPLIED
+    isSpecialHandlingInLine                (yes)      #IMPLIED
+    isShippingInLine                       (yes)      #IMPLIED
+    isDiscountInLine                       (yes)      #IMPLIED
+    isAccountingInLine                     (yes)      #IMPLIED
+>
+
+<!--
+    Defines special handling information of the current SES line.
+
+    Description
+        Textual description of the special handling.
+
+    Money
+        The special handling amount.
+-->
+<!ELEMENT ServiceEntryDetailLineSpecialHandling (Description?, Money)>
+
+<!--
+    Defines shipping information of the current SES line.
+
+    ServiceEntryDetailShipping
+        The shipping details.
+
+    Money
+        The shipping amount.
+-->
+<!ELEMENT ServiceEntryDetailLineShipping (ServiceEntryDetailShipping, Money)>
+
+<!--
+    Defines information related to a summary of line modifications(allowances/charges) in Service Entry Sheet.
+
+    Modification
+        Summary of one modification.
+-->	
+<!ELEMENT ServiceEntrySummaryLineItemModifications (Modification+)><!--
     For cXML license agreement information, please see
     http://www.cxml.org/home/license.asp
 
-    $Id: //ariba/cxml/schema/Modules/Transport.mod#6 $
+    $Id: //ariba/cxml/release/schema/1.2.28.2+/Modules/Transport.mod#1 $
 -->
 
 <!--
@@ -4753,6 +6274,9 @@ xml:lang %xmlLangCode; #REQUIRED>
 
     AssetInfo
         Optional asset information for this line item. Specified for each quantity of the line item.
+        
+    DeliveryAddress
+             Address where goods are received.
 
     Comments
         Textual comments for this line item.
@@ -4774,15 +6298,21 @@ xml:lang %xmlLangCode; #REQUIRED>
     itemType
         specify whether the line item contains child line items or acts as a child item
 
--->
-<!ELEMENT ReceiptItem (ReceiptItemReference, UnitRate, ReceivedAmount, AssetInfo*, Comments?, Extrinsic*)>
-<!ATTLIST ReceiptItem
-	receiptLineNumber             %uint;            #REQUIRED
-	quantity                      %r8;              #REQUIRED
-	type                      (received|returned)   #IMPLIED
-        parentReceiptLineNumber       %uint;            #IMPLIED
-        itemType                      %lineItemType;    #IMPLIED
+	compositeItemType
+		specify type of parent line item(lot/box)
 
+    completedIndicator
+        An attribute specifying whether a component ship notice item is considered closed. This would mean that no more component receipts are expected for this item.
+-->
+<!ELEMENT ReceiptItem (ReceiptItemReference, UnitRate, ReceivedAmount, AssetInfo*, DeliveryAddress?, Comments?, Extrinsic*)>
+<!ATTLIST ReceiptItem
+	receiptLineNumber             %uint;                #REQUIRED
+	quantity                      %r8;                  #REQUIRED
+	type                      (received|returned)       #IMPLIED
+    parentReceiptLineNumber       %uint;                #IMPLIED
+    itemType                      %lineItemType;        #IMPLIED
+    compositeItemType			  %compositeItemType;	#IMPLIED
+    completedIndicator        (yes)                     #IMPLIED
 >
 
 <!-- 
@@ -4809,7 +6339,7 @@ xml:lang %xmlLangCode; #REQUIRED>
        ID of the ShipNoticeRequest known to the Buyer system. This ID is used when ShipNoticeReference is omitted.
 
     lineNumber
-        The line number of current line item, copied from OrderRequest.
+        The line number of current line item, copied from OrderRequest.In the scenario where the OrderRequest is blank, the line number will refer to that of the Component Ship Notice i.e. the ASN referenced in the ShipNoticeReference .
 -->
 <!ELEMENT ReceiptItemReference (ItemID?, Description?, (ManufacturerPartID, ManufacturerName)?, (ShipNoticeReference | ShipNoticeIDInfo)?)>
 <!ATTLIST ReceiptItemReference
@@ -4821,6 +6351,132 @@ xml:lang %xmlLangCode; #REQUIRED>
     Amount of goods or services received by the buying organization.
 -->
 <!ELEMENT ReceivedAmount (Money)>
+
+<!--
+    The delivered address for an item.
+-->
+<!ELEMENT DeliveryAddress (Address)>
+
+<!ELEMENT ComponentConsumptionRequest (ComponentConsumptionHeader, ComponentConsumptionPortion*)>
+
+<!--
+ComponentConsumptionHeader. Information about this component consumption that is common to all contained portions.
+
+Comments
+The Comments element list may contain additional information about this consumption document. All such data must be intended for human use.
+Elements in the Comments list may appear in any order. The xml:lang attribute may have the same value in multiple Comments elements in the list. The set of Comments with a particular xml:lang value should contain similar content to that for any other xml:lang value present in the list.
+
+consumptionID
+An identifier for this particular component consumption document
+
+operation
+The (optional) operational mode of component consumption document.  Defaults
+to "new". Update and delete operations are not supported for this document.
+
+referenceDocumentID
+The identifier of reference Work Order for which the consumption is reported.
+
+creationDate
+The date and time this component consumption document was created.
+
+lastChangeDate
+The date and time this component consumption document was last modified.
+
+Extrinsic
+This element list may be used to insert additional data about this component consumption header.
+-->
+
+<!ELEMENT ComponentConsumptionHeader (Comments*, Extrinsic*)>
+
+<!ATTLIST ComponentConsumptionHeader
+consumptionID           %string;              #REQUIRED
+operation 		(new)                       #REQUIRED
+referenceDocumentID   %string;              #IMPLIED
+creationDate           %datetime.tz;         #IMPLIED
+lastChangeDate         %datetime.tz;         #IMPLIED
+>
+
+<!--
+ComponentConsumptionPortion: This element captures details of all component consumptions for a particular OrderRequest (via the OrderReference or  MasterAgreementReference element)
+
+OrderReference
+This element can be used to identify the corresponding purchase order for which component consumption is reported.
+
+MasterAgreementReference or MasterAgreementIDInfo
+This element can be used to identify the corresponding scheduling agreement if the component consumption is generated from a scheduling agreement release.
+
+ComponentConsumptionItem
+This element captures details of all consumption items for given order reference.
+
+Extrinsic
+This element list may be used to insert additional data about this component consumption portion.
+-->
+
+<!ELEMENT ComponentConsumptionPortion
+(OrderReference, (MasterAgreementReference | MasterAgreementIDInfo)?, ComponentConsumptionItem*, Extrinsic*)>
+
+<!--
+ComponentConsumptionItem: This element captures details of all consumption for a given order reference item.
+
+ItemID
+This element can be used to identify the part ID of sub-contracted purchase order item for which component consumption is reported.
+
+BuyerBatchID
+BuyerBatchID is the batch ID provided by the buyer at the line item level to identify the buyer batch for which the item or the product was produced. The batch id is helpful in traceability.
+
+SupplierBatchID
+SupplierBatchID is the batch ID provided by the supplier at the line item level
+to identify  the batch in which the item or the product was produced. The batch id is helpful in traceability. Batch numbers (also call "lot number", "variant") are used in several industries to uniquely identify items produced together.
+
+Contact
+In this context, roles that are usually included are : BuyerParty, ProductReceipentParty, ShipFromLocation & ShipToLocation
+
+ComponentConsumptionDetails
+This element captures details of component consumption for a given PO line item
+
+poLineNumber
+This attribute identifies referring PO item number
+
+completedIndicator
+This Boolean flag attribute indicates whether consumption reporting is completed for a PO item or not
+
+Extrinsic
+This element list may be used to insert additional data about this component consumption portion.
+-->
+
+<!ELEMENT ComponentConsumptionItem (ItemID, BuyerBatchID?, SupplierBatchID?, Contact*, Comments*, ComponentConsumptionDetails*, Extrinsic*)>
+<!ATTLIST ComponentConsumptionItem
+poLineNumber           %uint;                #REQUIRED
+completedIndicator   (yes)                   #IMPLIED
+>
+
+<!--
+ComponentConsumptionDetails: This element captures consumption details.
+
+Product
+The supplier & buyer part ID of component that is consumed .
+
+BuyerBatchID
+BuyerBatchID is the batch ID provided by the buyer for the component that is consumed
+
+SupplierBatchID
+SupplierBatchID is the batch ID provided by the supplier for the component that is consumed.
+
+lineNumber
+The position of a component in the current consumption details
+
+quantity
+The quantity of component that is consumed
+
+Extrinsic
+The Extrinsic element list may be used to insert additional data at schedule line level of component consumption.
+-->
+
+<!ELEMENT ComponentConsumptionDetails (Product, UnitOfMeasure, BuyerBatchID?, SupplierBatchID?, Extrinsic*)>
+<!ATTLIST ComponentConsumptionDetails
+lineNumber           %uint;                #IMPLIED
+quantity             %r8;                  #REQUIRED
+>
 <!--
     For cXML license agreement information, please see
     http://www.cxml.org/home/license.asp
@@ -5018,9 +6674,8 @@ other namespaces, for example:
     http://uri.etsi.org/01903/v1.3.2#
 -->
 
-<!ENTITY % Any.ANY ' '>
-<!ENTITY % XMLTimeStamp.ANY ' '>
-<!ENTITY % Method.ANY ' '>
+<!ENTITY % Any.ANY ''>
+<!ENTITY % XMLTimeStamp.ANY ''>
 
 <!-- Start Any -->
 
